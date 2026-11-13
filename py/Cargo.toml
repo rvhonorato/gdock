@@ -1,0 +1,30 @@
+[package]
+name = "gdock-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Information-driven protein-protein docking - Python bindings"
+# Released on PyPI, not on crates.io.
+publish = false
+readme = "README.md"
+
+[lib]
+name = "_internal"
+crate-type = ["cdylib"]
+
+[dependencies]
+gdock = { workspace = true, features = ["parallel"] }
+pyo3 = "0.30"
+rayon = "1.12"
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+pyo3 = { version = "0.30", features = ["auto-initialize"] }
+
+[features]
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]

@@ -1,3 +1,4 @@
+pub mod api;
 pub mod chromosome;
 pub mod clustering;
 pub mod constants;

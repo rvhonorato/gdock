@@ -1,0 +1,88 @@
+name: website
+
+on:
+  push:
+    branches: [main]
+    paths: ["website/**", "wasm/**", "src/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/website.yml"]
+  pull_request:
+    paths: ["website/**", "wasm/**", "src/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/website.yml"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Faster CI builds. The runner has a 10 minute limit.
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+  RUSTUP_VERSION: 1.29.0
+  RUSTUP_SHA256: 4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10
+  GIT_PAGES_CLI_VERSION: v1.13.1
+  GIT_PAGES_CLI_SHA256: 410471d712d6c44ff5284c016f9ccd978095af8d03583f62666006f9f66b570d
+
+jobs:
+  build:
+    runs-on: codeberg-medium
+    container:
+      image: docker.io/library/node:22
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: https://code.forgejo.org/actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-wasm-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-wasm-${{ runner.os }}-
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/rustup-init "https://static.rust-lang.org/rustup/archive/$RUSTUP_VERSION/x86_64-unknown-linux-gnu/rustup-init"
+          echo "$RUSTUP_SHA256  /tmp/rustup-init" | sha256sum -c -
+          chmod +x /tmp/rustup-init
+          /tmp/rustup-init -y --profile minimal --component clippy --target wasm32-unknown-unknown
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - run: npm install --global wasm-pack
+
+      # The wasm crate has no workflow of its own. Its checks are here.
+      - name: Lint gdock-wasm
+        run: cargo clippy -p gdock-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
+      - name: Test gdock-wasm
+        working-directory: wasm
+        run: wasm-pack test --node
+
+      # The website uses the wasm package from this repository.
+      - name: Build gdock-wasm
+        working-directory: website
+        run: npm run wasm
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        working-directory: website
+        run: npm run lint
+      - name: Install Playwright browser
+        working-directory: website
+        run: npx playwright install chromium --with-deps
+      - name: Test
+        working-directory: website
+        run: npm test
+      - name: Build
+        working-directory: website
+        run: npm run build
+
+      - name: Deploy to Codeberg Pages
+        if: forgejo.event_name == 'push' && forgejo.ref_name == 'main'
+        env:
+          TOKEN: ${{ forgejo.token }}
+        # The token is valid for gdock.org because of the DNS record
+        # _git-pages-forge-allowlist.gdock.org (TXT, the clone URL of this repository).
+        run: |
+          curl -fsSL -o /tmp/git-pages-cli "https://codeberg.org/git-pages/git-pages-cli/releases/download/$GIT_PAGES_CLI_VERSION/git-pages-cli.linux-amd64"
+          echo "$GIT_PAGES_CLI_SHA256  /tmp/git-pages-cli" | sha256sum -c -
+          chmod +x /tmp/git-pages-cli
+          /tmp/git-pages-cli https://gdock.org/ \
+            --server codeberg.page \
+            --token="$TOKEN" \
+            --upload-dir=website/dist/

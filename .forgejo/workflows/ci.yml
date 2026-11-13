@@ -2,11 +2,16 @@ name: ci
 
 on:
   push:
+    branches: [main]
+    paths: ["src/**", "data/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/ci.yml"]
   pull_request:
+    paths: ["src/**", "data/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/ci.yml"]
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
 
 jobs:
   ci:

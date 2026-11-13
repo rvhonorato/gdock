@@ -9,6 +9,12 @@
 
 <img src="imgs/gdock_logo.png" alt="gdock_logo" width="350">
 
+> [!WARNING]
+> **This repository is in reorganization.**
+> The Python bindings, the WebAssembly bindings and the website moved into
+> this repository. The documentation is not up to date yet. Some instructions
+> in this file and in the `py/` and `wasm/` directories can be incorrect.
+
 > **The main source repository has moved to
 > [Codeberg](https://codeberg.org/rvhonorato/gdock).** GitHub remains available
 > as a mirror; please open issues and pull requests on Codeberg.
@@ -277,8 +283,6 @@ algorithm behavior.
 - [`gdock-benchmark`](https://github.com/rvhonorato/gdock-benchmark): repository
 containing all scripts and raw data relevant to benchmarking the performance
 of `gdock`
-- [`gdock-wasm`](https://github.com/rvhonorato/gdock-wasm): WebAssembly bindings
-used in [gdock.org](https://gdock.org)
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 use crate::structure;
-use rand::distributions::{Alphanumeric, DistString};
+use rand::distr::{Alphanumeric, SampleString};
 use std::path::PathBuf;
 
 pub fn generate_restraints(
@@ -41,7 +41,7 @@ pub fn generate_restraints(
 
 // Generate a unique string
 pub fn unique_str() -> String {
-    Alphanumeric.sample_string(&mut rand::thread_rng(), 16)
+    Alphanumeric.sample_string(&mut rand::rng(), 16)
 }
 
 /// Creates a unique temporary directory path.

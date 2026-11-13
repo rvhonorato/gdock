@@ -7,7 +7,7 @@ use crate::structure::Molecule;
 use core::cmp::Ordering;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::RngExt;
 #[cfg(feature = "parallel")]
 use rayon::iter::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
 
@@ -154,7 +154,7 @@ impl Population {
         for _ in 0..self.size() {
             let tournament_individuals = (0..constants::TOURNAMENT_SIZE)
                 .map(|_| {
-                    let random_index = rng.gen_range(0..self.size());
+                    let random_index = rng.random_range(0..self.size());
                     &self.chromosomes[random_index]
                 })
                 .collect::<Vec<_>>();

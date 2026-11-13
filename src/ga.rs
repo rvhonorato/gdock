@@ -2,7 +2,7 @@
 use super::constants::CROSSOVER_RATE;
 use crate::chromosome::Chromosome;
 use rand::rngs::StdRng;
-use rand::Rng;
+use rand::RngExt;
 
 pub fn crossover(
     rng: &mut StdRng,
@@ -18,7 +18,7 @@ pub fn crossover(
     // Loop over the zipped genes
     for (gene1, gene2) in zipped_genes {
         // Check if the genes should be swapped
-        if rng.gen_range(0.0..1.0) <= CROSSOVER_RATE {
+        if rng.random_range(0.0..1.0) <= CROSSOVER_RATE {
             // Swap the genes
             new_genes1.push(*gene2);
             new_genes2.push(*gene1);

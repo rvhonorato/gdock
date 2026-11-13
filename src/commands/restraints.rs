@@ -1,54 +1,12 @@
-use crate::structure::{read_pdb, Atom, Molecule};
-use regex::Regex;
-use std::collections::{HashMap, HashSet};
+use crate::structure::read_pdb;
 
-/// Find interface residue pairs between receptor and ligand within a distance cutoff.
-/// Returns pairs of (receptor_resseq, ligand_resseq) that are in contact.
-pub fn find_interface_pairs(
-    receptor: &Molecule,
-    ligand: &Molecule,
-    cutoff: f64,
-) -> Vec<(i16, i16)> {
-    let mut interface_pairs: Vec<(i16, i16)> = Vec::new();
+// These functions moved to `crate::restraints`, which also builds for wasm32.
+use crate::restraints::{find_ambiguous_pairs, parse_tbl};
+pub use crate::restraints::{find_interface_pairs, find_unambiguous_pairs};
 
-    // Get unique residues from receptor and ligand
-    let rec_residues: HashSet<i16> = receptor.0.iter().map(|a| a.resseq).collect();
-    let lig_residues: HashSet<i16> = ligand.0.iter().map(|a| a.resseq).collect();
-
-    for rec_res in &rec_residues {
-        for lig_res in &lig_residues {
-            // Get heavy atoms for this residue pair
-            let rec_atoms: Vec<_> = receptor
-                .0
-                .iter()
-                .filter(|a| a.resseq == *rec_res && !a.name.starts_with('H'))
-                .collect();
-            let lig_atoms: Vec<_> = ligand
-                .0
-                .iter()
-                .filter(|a| a.resseq == *lig_res && !a.name.starts_with('H'))
-                .collect();
-
-            // Check if any pair of atoms is within cutoff
-            'outer: for rec_atom in &rec_atoms {
-                for lig_atom in &lig_atoms {
-                    let dx = rec_atom.x - lig_atom.x;
-                    let dy = rec_atom.y - lig_atom.y;
-                    let dz = rec_atom.z - lig_atom.z;
-                    let dist = (dx * dx + dy * dy + dz * dz).sqrt();
-
-                    if dist <= cutoff {
-                        interface_pairs.push((*rec_res, *lig_res));
-                        break 'outer;
-                    }
-                }
-            }
-        }
-    }
-
-    // Sort for consistent output
-    interface_pairs.sort();
-    interface_pairs
+fn print_pairs(pairs: &[(i16, i16)]) {
+    let pairs: Vec<String> = pairs.iter().map(|(r, l)| format!("{}:{}", r, l)).collect();
+    println!("{}", pairs.join(","));
 }
 
 /// Generate restraints from interface contacts and print to stdout.
@@ -62,82 +20,11 @@ pub fn generate_restraints(receptor_file: String, ligand_file: String, cutoff: f
     let receptor_model = read_pdb(&receptor_file);
     let ligand_model = read_pdb(&ligand_file);
 
-    let receptor = &receptor_model.0[0];
-    let ligand = &ligand_model.0[0];
-
-    let interface_pairs = find_interface_pairs(receptor, ligand, cutoff);
-
-    let mut active_rec: Vec<i16> = interface_pairs.iter().map(|(r, _)| *r).collect();
-    active_rec.sort();
-    active_rec.dedup();
-
-    let mut active_lig: Vec<i16> = interface_pairs.iter().map(|(_, l)| *l).collect();
-    active_lig.sort();
-    active_lig.dedup();
-
-    let mut pairs: Vec<String> = Vec::new();
-    for r in &active_rec {
-        for l in &active_lig {
-            pairs.push(format!("{}:{}", r, l));
-        }
-    }
-
-    println!("{}", pairs.join(","));
-}
-
-/// Minimum heavy-atom distance from a pre-collected receptor atom slice to a ligand residue.
-fn min_dist_to_res(rec_atoms: &[&Atom], ligand: &Molecule, lig_res: i16) -> f64 {
-    ligand
-        .0
-        .iter()
-        .filter(|a| a.resseq == lig_res && !a.name.starts_with('H'))
-        .flat_map(|la| {
-            rec_atoms.iter().map(move |ra| {
-                let dx = ra.x - la.x;
-                let dy = ra.y - la.y;
-                let dz = ra.z - la.z;
-                (dx * dx + dy * dy + dz * dz).sqrt()
-            })
-        })
-        .fold(f64::INFINITY, f64::min)
-}
-
-/// Like `find_interface_pairs` but returns only the single closest ligand partner
-/// per receptor residue (minimum heavy-atom distance).
-///
-/// Use this to generate unambiguous 1:1 restraints where the GA must bring a
-/// specific receptor residue close to a specific ligand residue, rather than
-/// satisfying any member of a large OR group.
-pub fn find_unambiguous_pairs(
-    receptor: &Molecule,
-    ligand: &Molecule,
-    cutoff: f64,
-) -> Vec<(i16, i16)> {
-    let all_pairs = find_interface_pairs(receptor, ligand, cutoff);
-
-    let mut by_rec: HashMap<i16, Vec<i16>> = HashMap::new();
-    for (r, l) in &all_pairs {
-        by_rec.entry(*r).or_default().push(*l);
-    }
-
-    let mut result: Vec<(i16, i16)> = by_rec
-        .iter()
-        .filter_map(|(rec_res, lig_candidates)| {
-            let rec_atoms: Vec<&Atom> = receptor
-                .0
-                .iter()
-                .filter(|a| a.resseq == *rec_res && !a.name.starts_with('H'))
-                .collect();
-            lig_candidates
-                .iter()
-                .map(|&l| (l, min_dist_to_res(&rec_atoms, ligand, l)))
-                .min_by(|(_, d1), (_, d2)| d1.partial_cmp(d2).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(closest, _)| (*rec_res, closest))
-        })
-        .collect();
-
-    result.sort();
-    result
+    print_pairs(&find_ambiguous_pairs(
+        &receptor_model.0[0],
+        &ligand_model.0[0],
+        cutoff,
+    ));
 }
 
 /// Generate unambiguous restraints: one closest-partner pair per receptor residue.
@@ -150,149 +37,25 @@ pub fn generate_restraints_unambig(receptor_file: String, ligand_file: String, c
     let receptor_model = read_pdb(&receptor_file);
     let ligand_model = read_pdb(&ligand_file);
 
-    let receptor = &receptor_model.0[0];
-    let ligand = &ligand_model.0[0];
-
-    let unambig_pairs = find_unambiguous_pairs(receptor, ligand, cutoff);
-
-    let pairs: Vec<String> = unambig_pairs
-        .iter()
-        .map(|(r, l)| format!("{}:{}", r, l))
-        .collect();
-
-    println!("{}", pairs.join(","));
+    print_pairs(&find_unambiguous_pairs(
+        &receptor_model.0[0],
+        &ligand_model.0[0],
+        cutoff,
+    ));
 }
 
-/// Extract `(segid, resseq)` tuples from one assign block's text.
+/// Read a HADDOCK AIR `.tbl` file into `(receptor_resseq, ligand_resseq)` pairs.
 ///
-/// Handles both `(resid N and segid X)` and `(segid X and resid N)` forms,
-/// and accepts the `resi` abbreviation used by some HADDOCK versions.
-fn parse_selections(block: &str, sel_re: &Regex) -> Vec<(String, i32)> {
-    sel_re
-        .captures_iter(block)
-        .filter_map(|cap| {
-            if let (Some(resi), Some(segid)) = (cap.get(1), cap.get(2)) {
-                let n = resi.as_str().parse::<i32>().ok()?;
-                Some((segid.as_str().to_uppercase(), n))
-            } else if let (Some(segid), Some(resi)) = (cap.get(3), cap.get(4)) {
-                let n = resi.as_str().parse::<i32>().ok()?;
-                Some((segid.as_str().to_uppercase(), n))
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-/// Parse a HADDOCK AIR `.tbl` file into active-active `(receptor_resseq, ligand_resseq)` pairs.
-///
-/// Chain identities are detected automatically: the segid that first appears as an
-/// anchor is treated as the receptor; the other segid is the ligand.  Only residues
-/// that appear as anchors are considered active; passive OR-group members (never
-/// anchors) are silently dropped.
+/// See [`parse_tbl`] for the rules. Exits the process on an error.
 pub fn tbl_to_pairs(tbl_file: &str) -> Vec<(i32, i32)> {
     let content = std::fs::read_to_string(tbl_file).unwrap_or_else(|e| {
         eprintln!("Error: cannot read TBL file '{}': {}", tbl_file, e);
         std::process::exit(1);
     });
-
-    let stripped: String = content
-        .lines()
-        .map(|line| {
-            if let Some(pos) = line.find('!') {
-                &line[..pos]
-            } else {
-                line
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    let sel_re = Regex::new(
-        r"(?i)\(\s*(?:resid?\s+(\d+)\s+and\s+segid\s+(\w+)|segid\s+(\w+)\s+and\s+resid?\s+(\d+))\s*\)",
-    )
-    .expect("invalid regex");
-
-    let assign_re = Regex::new(r"(?i)\bassign\b").expect("invalid regex");
-    let blocks: Vec<&str> = assign_re.split(&stripped).skip(1).collect();
-
-    let parsed: Vec<Vec<(String, i32)>> = blocks
-        .iter()
-        .map(|b| parse_selections(b, &sel_re))
-        .collect();
-
-    // Auto-detect chains: first segid seen as an anchor = receptor; the other = ligand.
-    let mut rec = String::new();
-    let mut lig = String::new();
-    'outer: for sels in &parsed {
-        if let Some((anchor_seg, _)) = sels.first() {
-            if rec.is_empty() {
-                rec = anchor_seg.clone();
-            }
-            for (seg, _) in &sels[1..] {
-                if seg != &rec && lig.is_empty() {
-                    lig = seg.clone();
-                    break 'outer;
-                }
-            }
-        }
-    }
-
-    if rec.is_empty() || lig.is_empty() {
-        eprintln!(
-            "Error: could not detect two distinct chain segids in '{}'",
-            tbl_file
-        );
+    parse_tbl(&content).unwrap_or_else(|e| {
+        eprintln!("Error: {} in '{}'", e, tbl_file);
         std::process::exit(1);
-    }
-
-    // First pass — every anchor is active.
-    let mut active: HashSet<(String, i32)> = HashSet::new();
-    for sels in &parsed {
-        if let Some(anchor) = sels.first() {
-            active.insert(anchor.clone());
-        }
-    }
-
-    // Second pass — collect pairs where both anchor and partner are active.
-    let mut groups: HashMap<i32, HashSet<i32>> = HashMap::new();
-    for sels in &parsed {
-        if sels.len() < 2 {
-            continue;
-        }
-        let (anchor_seg, anchor_resi) = &sels[0];
-        for (partner_seg, partner_resi) in &sels[1..] {
-            if !active.contains(&(partner_seg.clone(), *partner_resi)) {
-                continue;
-            }
-            if anchor_seg == &rec && partner_seg == &lig {
-                groups
-                    .entry(*anchor_resi)
-                    .or_default()
-                    .insert(*partner_resi);
-            } else if anchor_seg == &lig && partner_seg == &rec {
-                groups
-                    .entry(*partner_resi)
-                    .or_default()
-                    .insert(*anchor_resi);
-            }
-        }
-    }
-
-    let mut pairs: Vec<(i32, i32)> = groups
-        .into_iter()
-        .flat_map(|(rec_resi, lig_set)| lig_set.into_iter().map(move |l| (rec_resi, l)))
-        .collect();
-    pairs.sort();
-
-    if pairs.is_empty() {
-        eprintln!(
-            "Warning: no active-active pairs found for chains '{}'/'{}'",
-            rec, lig
-        );
-    }
-
-    pairs
+    })
 }
 
 #[cfg(test)]

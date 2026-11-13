@@ -1,0 +1,56 @@
+name: py
+
+on:
+  push:
+    branches: [main]
+    paths: ["py/**", "src/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/py.yml"]
+  pull_request:
+    paths: ["py/**", "src/**", "Cargo.toml", "Cargo.lock", ".forgejo/workflows/py.yml"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Faster CI builds. The runner has a 10 minute limit.
+  CARGO_INCREMENTAL: "0"
+  CARGO_PROFILE_DEV_DEBUG: "0"
+
+jobs:
+  test:
+    runs-on: codeberg-medium
+    container:
+      image: docker.io/library/rust:1
+    steps:
+      - name: Checkout code
+        # the remote is the source of truth
+        run: |
+          git init -b main .
+          git remote add origin https://codeberg.org/rvhonorato/gdock.git
+          git fetch --depth 1 origin "$GITHUB_SHA"
+          git -c advice.detachedHead=false checkout FETCH_HEAD
+
+      - name: Install uv
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-venv python3-dev
+          python3 -m venv /opt/tools
+          /opt/tools/bin/pip install --quiet uv
+          echo "/opt/tools/bin" >> "$GITHUB_PATH"
+
+      - name: Lint
+        run: |
+          rustup component add clippy rustfmt
+          cargo fmt -p gdock-py -- --check
+          cargo clippy -p gdock-py --no-default-features --all-targets -- -D warnings
+
+      # These tests link to libpython, so they need python3-dev.
+      - name: Rust tests
+        run: cargo test -p gdock-py --no-default-features
+
+      - name: Build and test
+        working-directory: py
+        run: |
+          uv venv --python 3.14 .venv
+          . .venv/bin/activate
+          uv pip install maturin pytest
+          maturin develop --uv
+          pytest tests/

@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Accent color from logo */
+@theme {
+  --color-accent-500: #ee2533;
+  --color-accent-600: #c22436;
+  --color-accent-400: #f14f2b;
+}
+
+:root {
+  --color-primary: #0f172a;
+  --color-secondary: #475569;
+  --color-accent: #3b82f6;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+/* Code blocks styling */
+pre {
+  tab-size: 2;
+}
+
+code {
+  font-family: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* Selection styling */
+::selection {
+  background-color: #cbd5e1;
+}
+
+/* Heading font to match logo */
+.font-heading {
+  font-family: 'Quicksand', system-ui, sans-serif;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

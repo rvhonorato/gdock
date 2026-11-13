@@ -1,0 +1,36 @@
+[package]
+name = "gdock-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "WebAssembly bindings for the gdock protein–protein docking engine"
+# Not released. The website builds it from this directory.
+publish = false
+readme = "README.md"
+keywords = ["docking", "bioinformatics", "wasm", "webassembly", "protein"]
+categories = ["science", "wasm"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+gdock = { workspace = true }
+wasm-bindgen = "0.2"
+serde = { workspace = true }
+serde-wasm-bindgen = "0.6"
+console_error_panic_hook = { version = "0.1", optional = true }
+# No code names it. It turns on the "wasm_js" feature that rand needs in the browser.
+getrandom = { version = "0.4", features = ["wasm_js"] }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[package.metadata.cargo-machete]
+ignored = ["getrandom"]

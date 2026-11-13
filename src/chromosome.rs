@@ -6,7 +6,7 @@ use crate::structure;
 use core::f64::consts::PI;
 use rand::rngs::StdRng;
 
-use rand::Rng;
+use rand::RngExt;
 
 #[derive(Debug, Clone)]
 pub struct Chromosome {
@@ -26,13 +26,13 @@ pub struct Chromosome {
 
 impl Chromosome {
     pub fn new(rng: &mut StdRng) -> Chromosome {
-        let alpha = rng.gen_range(0.0..=2.0 * PI);
-        let beta = rng.gen_range(0.0..=2.0 * PI);
-        let gamma = rng.gen_range(0.0..=2.0 * PI);
+        let alpha = rng.random_range(0.0..=2.0 * PI);
+        let beta = rng.random_range(0.0..=2.0 * PI);
+        let gamma = rng.random_range(0.0..=2.0 * PI);
 
-        let displacement_x = rng.gen_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
-        let displacement_y = rng.gen_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
-        let displacement_z = rng.gen_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
+        let displacement_x = rng.random_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
+        let displacement_y = rng.random_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
+        let displacement_z = rng.random_range(-MAX_DISPLACEMENT..=MAX_DISPLACEMENT);
 
         Chromosome {
             genes: vec![
@@ -61,7 +61,7 @@ impl Chromosome {
         // Creep mutation: add small perturbations instead of random replacement
         // This (should) allow local refinement around good solutions
         for i in 0..self.genes.len() {
-            if rng.gen_range(0.0..1.0) <= mutation_chance {
+            if rng.random_range(0.0..1.0) <= mutation_chance {
                 if i < 3 {
                     // Rotations (alpha, beta, gamma): perturbation ±10° (0.174 radians)
                     // Allows fine-tuning of orientation

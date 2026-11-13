@@ -64,11 +64,29 @@ To auto-format your code:
 cargo fmt
 ```
 
+The commands above check the core crate only. The bindings and the website
+have their own checks:
+
+```bash
+# Python bindings (needs maturin and pytest)
+cd py && maturin develop && pytest tests/
+
+# WebAssembly bindings (needs wasm-pack and the wasm32-unknown-unknown target)
+cargo clippy -p gdock-wasm --target wasm32-unknown-unknown -- -D warnings
+cd wasm && node build.js
+
+# Website (needs Node.js; it uses the wasm package from wasm/)
+cd website && npm run wasm && npm ci && npm test && npm run build
+```
+
 ## Project Structure
 
 | Directory | Contents |
 |-----------|----------|
 | `src/` | Rust source code |
+| `py/` | Python bindings |
+| `wasm/` | WebAssembly bindings |
+| `website/` | gdock.org website |
 | `data/` | Test PDB files |
 | `paper/` | JOSS paper draft |
 | `scripts/` | Utility scripts |

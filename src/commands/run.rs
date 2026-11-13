@@ -1,22 +1,17 @@
-use rand::rngs::StdRng;
-use rand::SeedableRng;
 use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::chromosome;
-use crate::constants::{
-    self, EnergyWeights, HALL_OF_FAME_MAX_SIZE, MAX_GENERATIONS, POPULATION_SIZE,
-};
+use crate::api::{self, DockParams, DockRun};
+use crate::constants::EnergyWeights;
 use crate::evaluator;
-use crate::hall_of_fame::{HallOfFame, HallOfFameEntry};
+use crate::hall_of_fame::HallOfFameEntry;
 use crate::population;
 use crate::reporting;
 use crate::restraints;
-use crate::runner::{run_ga, select_models, GaResult};
+use crate::runner::select_models;
 use crate::scoring;
 use crate::structure::{self, read_pdb, Molecule};
-use crate::utils;
 
 pub struct RunConfig {
     pub receptor_file: String,
@@ -53,9 +48,11 @@ pub fn run(config: RunConfig) {
     let receptor = receptor_model.0[0].clone();
     let ligand = ligand_model.0[0].clone();
 
-    let restraints_list =
-        restraints::create_ambiguous_restraints_from_pairs(&receptor, &ligand, &restraint_pairs);
-    let num_restraints = restraints_list.len() / 2;
+    // Only for the header. The API builds its own list for the run.
+    let num_restraints =
+        restraints::create_ambiguous_restraints_from_pairs(&receptor, &ligand, &restraint_pairs)
+            .len()
+            / 2;
 
     reporting::header(
         VERSION,
@@ -68,9 +65,6 @@ pub fn run(config: RunConfig) {
         &weights,
     );
 
-    let orig = ligand.clone();
-    let ligand = utils::position_ligand(&receptor, ligand);
-
     let eval = if let Some(ref_file) = &reference_file {
         let (_, reference_ligand) = scoring::read_complex(ref_file);
         Some(evaluator::Evaluator::new(
@@ -80,13 +74,6 @@ pub fn run(config: RunConfig) {
     } else {
         None
     };
-
-    // debug mode fits against DockQ instead of the energy score
-    let debug_evaluator = if debug_mode { eval.clone() } else { None };
-
-    // kept for PDB output after receptor/ligand are moved into Population::new
-    let receptor_clone = receptor.clone();
-    let ligand_clone = ligand.clone();
 
     let out_dir = match &output_dir {
         Some(dir) => {
@@ -103,73 +90,68 @@ pub fn run(config: RunConfig) {
         None
     };
 
-    let mut rng = StdRng::seed_from_u64(constants::RANDOM_SEED);
-    let mut pop = population::Population::new(
-        Vec::new(),
+    let params = DockParams {
+        sampling,
+        weights,
+        ..DockParams::default()
+    };
+    let dock_run = evolve(
         receptor,
         ligand,
-        orig,
-        restraints_list,
-        weights,
-        debug_evaluator,
-    );
-    for _ in 0..POPULATION_SIZE {
-        pop.chromosomes.push(chromosome::Chromosome::new(&mut rng));
-    }
-
-    let hof_capacity = sampling.unwrap_or(HALL_OF_FAME_MAX_SIZE);
-    let ga_result = evolve(
-        pop,
-        &mut rng,
+        &restraint_pairs,
+        &params,
         eval.as_ref(),
         debug_mode,
-        hof_capacity,
         epoch_writer,
     );
 
     let ctx = OutputContext {
-        receptor: &receptor_clone,
-        ligand: &ligand_clone,
+        receptor: &dock_run.receptor,
+        ligand: dock_run.ligand(),
         eval: eval.as_ref(),
         out_dir: &out_dir,
         debug_mode,
         epoch,
-        generations_run: ga_result.generations_run,
-        converged_early: ga_result.converged_early,
+        generations_run: dock_run.generations_run,
+        converged_early: dock_run.converged_early,
     };
 
     if no_clustering {
-        write_best_models_output(&ctx, &ga_result.final_population);
+        write_best_models_output(&ctx, &dock_run.final_population);
     } else {
-        write_clustered_output(&ctx, &ga_result.hall_of_fame);
+        write_clustered_output(&ctx, dock_run.entries());
     }
 
     if sampling.is_some() {
         write_sampling_output(
-            &ga_result.hall_of_fame,
+            dock_run.entries(),
             &out_dir,
-            &receptor_clone,
-            &ligand_clone,
+            &dock_run.receptor,
+            dock_run.ligand(),
         );
     }
 
     reporting::done();
 }
 
-/// Run the GA loop, reporting live progress and (when enabled) streaming the
-/// per-generation trace to `epoch_writer`.
+/// Run the docking with live progress. With `epoch_writer`, also write the
+/// trace of each generation.
 fn evolve(
-    pop: population::Population,
-    rng: &mut StdRng,
+    receptor: Molecule,
+    ligand: Molecule,
+    pairs: &[(i32, i32)],
+    params: &DockParams,
     eval: Option<&evaluator::Evaluator>,
     debug_mode: bool,
-    hof_capacity: usize,
     mut epoch_writer: Option<reporting::EpochWriter>,
-) -> GaResult {
-    let progress = reporting::new_progress_bar(MAX_GENERATIONS);
-    reporting::evolution_start(MAX_GENERATIONS, POPULATION_SIZE);
+) -> DockRun {
+    let progress = reporting::new_progress_bar(params.max_generations);
+    reporting::evolution_start(params.max_generations, params.population_size);
 
-    let ga_result = run_ga(pop, rng, MAX_GENERATIONS, hof_capacity, |gen, pop| {
+    // debug mode fits against DockQ instead of the energy score
+    let debug_evaluator = if debug_mode { eval.cloned() } else { None };
+
+    let on_generation = |gen: u64, pop: &population::Population| {
         let metric_vec = eval.map(|e| pop.eval_metrics(e));
 
         if let Some(w) = epoch_writer.as_mut() {
@@ -202,7 +184,16 @@ fn evolve(
             ),
         };
         progress.set_message(message);
-    });
+    };
+
+    let dock_run = api::dock_with(
+        receptor,
+        ligand,
+        pairs,
+        params,
+        debug_evaluator,
+        on_generation,
+    );
 
     if let Some(w) = epoch_writer {
         w.finish();
@@ -210,11 +201,11 @@ fn evolve(
 
     reporting::finish_progress(
         &progress,
-        ga_result.generations_run,
-        ga_result.converged_early,
+        dock_run.generations_run,
+        dock_run.converged_early,
     );
 
-    ga_result
+    dock_run
 }
 
 /// Shared inputs threaded through the output writers, borrowed from `run()`.
@@ -312,10 +303,9 @@ fn write_best_models_output(ctx: &OutputContext, pop: &population::Population) {
 
 /// Default path: cluster the Hall of Fame and write the diverse `model_*` set
 /// plus the top-scoring `ranked_*` set, all into one `metrics.tsv`.
-fn write_clustered_output(ctx: &OutputContext, hall_of_fame: &HallOfFame) {
-    reporting::clustering(hall_of_fame.len());
+fn write_clustered_output(ctx: &OutputContext, hof_entries: &[HallOfFameEntry]) {
+    reporting::clustering(hof_entries.len());
 
-    let hof_entries = hall_of_fame.entries();
     let selected = select_models(hof_entries, ctx.receptor, ctx.ligand);
 
     let metrics_path = ctx.out_dir.join("metrics.tsv");
@@ -398,7 +388,7 @@ fn write_model(
 }
 
 fn write_sampling_output(
-    hall_of_fame: &HallOfFame,
+    entries: &[HallOfFameEntry],
     out_dir: &std::path::Path,
     receptor: &Molecule,
     ligand: &Molecule,
@@ -406,7 +396,7 @@ fn write_sampling_output(
     let sampling_dir = out_dir.join("sampling");
     fs::create_dir_all(&sampling_dir).expect("Failed to create sampling directory");
 
-    let mut sorted: Vec<&HallOfFameEntry> = hall_of_fame.entries().iter().collect();
+    let mut sorted: Vec<&HallOfFameEntry> = entries.iter().collect();
     sorted.sort_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap_or(Ordering::Equal));
 
     let tsv_path = sampling_dir.join("sampling.tsv");
@@ -481,7 +471,7 @@ mod tests {
         );
 
         let tmp = crate::utils::get_unique_tempdir();
-        write_sampling_output(&hof, tmp.as_path(), &receptor, &ligand);
+        write_sampling_output(hof.entries(), tmp.as_path(), &receptor, &ligand);
 
         let sampling_dir = tmp.as_path().join("sampling");
         assert!(
@@ -531,7 +521,7 @@ mod tests {
         );
 
         let tmp = crate::utils::get_unique_tempdir();
-        write_sampling_output(&hof, tmp.as_path(), &receptor, &ligand);
+        write_sampling_output(hof.entries(), tmp.as_path(), &receptor, &ligand);
 
         let tsv = std::fs::read_to_string(tmp.as_path().join("sampling/sampling.tsv")).unwrap();
         let mut lines = tsv.lines();
@@ -569,7 +559,7 @@ mod tests {
         );
 
         let tmp = crate::utils::get_unique_tempdir();
-        write_sampling_output(&hof, tmp.as_path(), &receptor, &ligand);
+        write_sampling_output(hof.entries(), tmp.as_path(), &receptor, &ligand);
 
         let tsv = std::fs::read_to_string(tmp.as_path().join("sampling/sampling.tsv")).unwrap();
         let mut lines = tsv.lines();

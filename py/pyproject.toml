@@ -1,0 +1,37 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "gdock"
+# The version comes from the Cargo workspace.
+dynamic = ["version"]
+description = "Information-driven protein-protein docking using a genetic algorithm - Python bindings"
+readme = "README.md"
+license = { text = "0BSD" }
+requires-python = ">=3.9"
+authors = [
+  { name = "Rodrigo V. Honorato", email = "rvhonorato@protonmail.com" },
+]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://gdock.org"
+Repository = "https://github.com/rvhonorato/gdock"
+
+[tool.maturin]
+features = ["extension-module"]
+python-source = "python"
+module-name = "gdock._internal"
+manylinux = "2014"

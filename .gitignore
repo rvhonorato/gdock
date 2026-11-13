@@ -156,3 +156,24 @@ paper/jats
 
 # Debug stuff
 .tmp
+
+# Python bindings (py/)
+__pycache__/
+.pytest_cache/
+*.so
+
+# WebAssembly bindings (wasm/)
+/wasm/pkg/
+
+# Website (website/)
+node_modules/
+*.log
+.env.local
+# Vitest browser mode (failure screenshots) and coverage
+__screenshots__/
+coverage/
+test-results/
+*.tsbuildinfo
+
+# Build output (py/dist, website/dist)
+dist/

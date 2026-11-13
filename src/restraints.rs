@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use crate::structure;
+use crate::structure::{self, Atom, Molecule};
 
 #[derive(Debug, Clone)]
 pub struct Restraint(pub structure::Atom, pub structure::Atom);
@@ -221,6 +221,309 @@ pub fn create_restraints(mol1: &structure::Molecule, mol2: &structure::Molecule)
     }
 
     restraints
+}
+
+/// Find interface residue pairs between receptor and ligand within a distance cutoff.
+/// Returns pairs of (receptor_resseq, ligand_resseq) that are in contact.
+pub fn find_interface_pairs(
+    receptor: &Molecule,
+    ligand: &Molecule,
+    cutoff: f64,
+) -> Vec<(i16, i16)> {
+    let mut interface_pairs: Vec<(i16, i16)> = Vec::new();
+
+    // Get unique residues from receptor and ligand
+    let rec_residues: HashSet<i16> = receptor.0.iter().map(|a| a.resseq).collect();
+    let lig_residues: HashSet<i16> = ligand.0.iter().map(|a| a.resseq).collect();
+
+    for rec_res in &rec_residues {
+        for lig_res in &lig_residues {
+            // Get heavy atoms for this residue pair
+            let rec_atoms: Vec<_> = receptor
+                .0
+                .iter()
+                .filter(|a| a.resseq == *rec_res && !a.name.starts_with('H'))
+                .collect();
+            let lig_atoms: Vec<_> = ligand
+                .0
+                .iter()
+                .filter(|a| a.resseq == *lig_res && !a.name.starts_with('H'))
+                .collect();
+
+            // Check if any pair of atoms is within cutoff
+            'outer: for rec_atom in &rec_atoms {
+                for lig_atom in &lig_atoms {
+                    let dx = rec_atom.x - lig_atom.x;
+                    let dy = rec_atom.y - lig_atom.y;
+                    let dz = rec_atom.z - lig_atom.z;
+                    let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+
+                    if dist <= cutoff {
+                        interface_pairs.push((*rec_res, *lig_res));
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+
+    // Sort for consistent output
+    interface_pairs.sort();
+    interface_pairs
+}
+
+/// Find HADDOCK-style ambiguous pairs: the cross-product of the interface residues.
+///
+/// Every receptor residue in contact with the ligand is paired with every
+/// ligand residue in contact with the receptor.
+pub fn find_ambiguous_pairs(
+    receptor: &Molecule,
+    ligand: &Molecule,
+    cutoff: f64,
+) -> Vec<(i16, i16)> {
+    let interface_pairs = find_interface_pairs(receptor, ligand, cutoff);
+
+    let mut active_rec: Vec<i16> = interface_pairs.iter().map(|(r, _)| *r).collect();
+    active_rec.sort();
+    active_rec.dedup();
+
+    let mut active_lig: Vec<i16> = interface_pairs.iter().map(|(_, l)| *l).collect();
+    active_lig.sort();
+    active_lig.dedup();
+
+    let mut pairs = Vec::with_capacity(active_rec.len() * active_lig.len());
+    for r in &active_rec {
+        for l in &active_lig {
+            pairs.push((*r, *l));
+        }
+    }
+    pairs
+}
+
+/// Minimum heavy-atom distance from a pre-collected receptor atom slice to a ligand residue.
+fn min_dist_to_res(rec_atoms: &[&Atom], ligand: &Molecule, lig_res: i16) -> f64 {
+    ligand
+        .0
+        .iter()
+        .filter(|a| a.resseq == lig_res && !a.name.starts_with('H'))
+        .flat_map(|la| {
+            rec_atoms.iter().map(move |ra| {
+                let dx = ra.x - la.x;
+                let dy = ra.y - la.y;
+                let dz = ra.z - la.z;
+                (dx * dx + dy * dy + dz * dz).sqrt()
+            })
+        })
+        .fold(f64::INFINITY, f64::min)
+}
+
+/// Like `find_interface_pairs` but returns only the single closest ligand partner
+/// per receptor residue (minimum heavy-atom distance).
+///
+/// Use this to generate unambiguous 1:1 restraints where the GA must bring a
+/// specific receptor residue close to a specific ligand residue, rather than
+/// satisfying any member of a large OR group.
+pub fn find_unambiguous_pairs(
+    receptor: &Molecule,
+    ligand: &Molecule,
+    cutoff: f64,
+) -> Vec<(i16, i16)> {
+    let all_pairs = find_interface_pairs(receptor, ligand, cutoff);
+
+    let mut by_rec: HashMap<i16, Vec<i16>> = HashMap::new();
+    for (r, l) in &all_pairs {
+        by_rec.entry(*r).or_default().push(*l);
+    }
+
+    let mut result: Vec<(i16, i16)> = by_rec
+        .iter()
+        .filter_map(|(rec_res, lig_candidates)| {
+            let rec_atoms: Vec<&Atom> = receptor
+                .0
+                .iter()
+                .filter(|a| a.resseq == *rec_res && !a.name.starts_with('H'))
+                .collect();
+            lig_candidates
+                .iter()
+                .map(|&l| (l, min_dist_to_res(&rec_atoms, ligand, l)))
+                .min_by(|(_, d1), (_, d2)| d1.partial_cmp(d2).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(closest, _)| (*rec_res, closest))
+        })
+        .collect();
+
+    result.sort();
+    result
+}
+
+fn is_word_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+/// Split the text on the word `assign` (any case) and drop the part before the first one.
+///
+/// This is a hand-written parser: the `regex` crate adds about 1 MB to the wasm build.
+fn split_assign_blocks(text: &str) -> Vec<&str> {
+    const WORD: &str = "assign";
+    let lower = text.to_ascii_lowercase();
+    let mut blocks = Vec::new();
+    let mut block_start: Option<usize> = None;
+    let mut from = 0;
+    while let Some(found) = lower[from..].find(WORD) {
+        let at = from + found;
+        let end = at + WORD.len();
+        let before_ok = !lower[..at].chars().next_back().is_some_and(is_word_char);
+        let after_ok = !lower[end..].chars().next().is_some_and(is_word_char);
+        if before_ok && after_ok {
+            if let Some(start) = block_start {
+                blocks.push(&text[start..at]);
+            }
+            block_start = Some(end);
+        }
+        from = end;
+    }
+    if let Some(start) = block_start {
+        blocks.push(&text[start..]);
+    }
+    blocks
+}
+
+/// Read one selection group: `resid N and segid X` or `segid X and resid N`.
+fn parse_selection(group: &str) -> Option<(String, i32)> {
+    let words: Vec<&str> = group.split_whitespace().collect();
+    let is_resid = |w: &str| w.eq_ignore_ascii_case("resid") || w.eq_ignore_ascii_case("resi");
+    let is_word = |w: &str| !w.is_empty() && w.chars().all(is_word_char);
+    let [a, b, and, c, d] = words[..] else {
+        return None;
+    };
+    if !and.eq_ignore_ascii_case("and") {
+        return None;
+    }
+    let (resi, segid) = if is_resid(a) && c.eq_ignore_ascii_case("segid") {
+        (b, d)
+    } else if a.eq_ignore_ascii_case("segid") && is_resid(c) {
+        (d, b)
+    } else {
+        return None;
+    };
+    if !is_word(segid) || resi.is_empty() || !resi.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    Some((segid.to_uppercase(), resi.parse().ok()?))
+}
+
+/// Extract `(segid, resseq)` tuples from one assign block's text.
+///
+/// Handles both `(resid N and segid X)` and `(segid X and resid N)` forms,
+/// and accepts the `resi` abbreviation used by some HADDOCK versions.
+/// Only the innermost parentheses are read.
+fn parse_selections(block: &str) -> Vec<(String, i32)> {
+    let mut found = Vec::new();
+    let mut open: Option<usize> = None;
+    for (i, c) in block.char_indices() {
+        match c {
+            '(' => open = Some(i + 1),
+            ')' => {
+                if let Some(start) = open.take() {
+                    found.extend(parse_selection(&block[start..i]));
+                }
+            }
+            _ => {}
+        }
+    }
+    found
+}
+
+/// Parse the text of a HADDOCK AIR `.tbl` file into active-active `(receptor_resseq, ligand_resseq)` pairs.
+///
+/// Chain identities are detected automatically: the segid that first appears as an
+/// anchor is treated as the receptor; the other segid is the ligand.  Only residues
+/// that appear as anchors are considered active; passive OR-group members (never
+/// anchors) are silently dropped.
+pub fn parse_tbl(content: &str) -> Result<Vec<(i32, i32)>, String> {
+    let stripped: String = content
+        .lines()
+        .map(|line| {
+            if let Some(pos) = line.find('!') {
+                &line[..pos]
+            } else {
+                line
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let blocks = split_assign_blocks(&stripped);
+
+    let parsed: Vec<Vec<(String, i32)>> = blocks.iter().map(|b| parse_selections(b)).collect();
+
+    // Auto-detect chains: first segid seen as an anchor = receptor; the other = ligand.
+    let mut rec = String::new();
+    let mut lig = String::new();
+    'outer: for sels in &parsed {
+        if let Some((anchor_seg, _)) = sels.first() {
+            if rec.is_empty() {
+                rec = anchor_seg.clone();
+            }
+            for (seg, _) in &sels[1..] {
+                if seg != &rec && lig.is_empty() {
+                    lig = seg.clone();
+                    break 'outer;
+                }
+            }
+        }
+    }
+
+    if rec.is_empty() || lig.is_empty() {
+        return Err("could not detect two distinct chain segids".to_string());
+    }
+
+    // First pass — every anchor is active.
+    let mut active: HashSet<(String, i32)> = HashSet::new();
+    for sels in &parsed {
+        if let Some(anchor) = sels.first() {
+            active.insert(anchor.clone());
+        }
+    }
+
+    // Second pass — collect pairs where both anchor and partner are active.
+    let mut groups: HashMap<i32, HashSet<i32>> = HashMap::new();
+    for sels in &parsed {
+        if sels.len() < 2 {
+            continue;
+        }
+        let (anchor_seg, anchor_resi) = &sels[0];
+        for (partner_seg, partner_resi) in &sels[1..] {
+            if !active.contains(&(partner_seg.clone(), *partner_resi)) {
+                continue;
+            }
+            if anchor_seg == &rec && partner_seg == &lig {
+                groups
+                    .entry(*anchor_resi)
+                    .or_default()
+                    .insert(*partner_resi);
+            } else if anchor_seg == &lig && partner_seg == &rec {
+                groups
+                    .entry(*partner_resi)
+                    .or_default()
+                    .insert(*anchor_resi);
+            }
+        }
+    }
+
+    let mut pairs: Vec<(i32, i32)> = groups
+        .into_iter()
+        .flat_map(|(rec_resi, lig_set)| lig_set.into_iter().map(move |l| (rec_resi, l)))
+        .collect();
+    pairs.sort();
+
+    if pairs.is_empty() {
+        eprintln!(
+            "Warning: no active-active pairs found for chains '{}'/'{}'",
+            rec, lig
+        );
+    }
+
+    Ok(pairs)
 }
 
 #[cfg(test)]
@@ -578,5 +881,42 @@ mod tests {
         let restraints = create_restraints(&mol1, &mol2);
 
         assert_eq!(restraints.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_tbl_active_active_pairs() {
+        let tbl = "\
+! comment line
+assign (resid 10 and segid A) (resid 20 and segid B) 2.0 2.0 0.0
+assign (resid 20 and segid B) (resid 10 and segid A) 2.0 2.0 0.0
+assign (resid 11 and segid A) (resid 20 and segid B) or (resid 99 and segid B) 2.0 2.0 0.0
+";
+        // 99 is never an anchor, so it is passive and dropped.
+        assert_eq!(parse_tbl(tbl).unwrap(), vec![(10, 20), (11, 20)]);
+    }
+
+    #[test]
+    fn test_parse_tbl_needs_two_chains() {
+        assert!(parse_tbl("assign (resid 1 and segid A) 2.0 2.0 0.0").is_err());
+    }
+
+    #[test]
+    fn test_parse_tbl_accepts_haddock_forms() {
+        // Upper case keywords, `resi`, swapped order, nested parentheses and a trailing comment.
+        let tbl = "\
+ASSIGN ((segid A and RESI 5)) ((SEGID B AND resid 7)
+   or (resid 8 and segid B)) 2.0 2.0 0.0 ! comment (resid 99 and segid A)
+Assign ((resid 7 and segid B)) ((segid A and resid 5)) 2.0 2.0 0.0
+assign ((resid 8 and segid B)) ((resid 5 and segid A)) 2.0 2.0 0.0
+";
+        assert_eq!(parse_tbl(tbl).unwrap(), vec![(5, 7), (5, 8)]);
+    }
+
+    #[test]
+    fn test_parse_tbl_ignores_words_that_only_contain_assign() {
+        // "reassign" and "assigned" are not the keyword, so there is no block.
+        assert!(
+            parse_tbl("reassign (resid 1 and segid A) assigned (resid 1 and segid B)").is_err()
+        );
     }
 }

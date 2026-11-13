@@ -296,11 +296,22 @@ pub fn cluster_structures(
         .map(|mol| calculate_contacts(mol, config.contact_distance))
         .collect();
 
+    cluster_contact_sets(&contact_sets, config)
+}
+
+/// Cluster structures from their pre-computed contact sets (FCC).
+///
+/// Use this when the caller already has the output of [`calculate_contacts`]
+/// for each structure. `config.contact_distance` is not used.
+pub fn cluster_contact_sets(
+    contact_sets: &[HashSet<String>],
+    config: &ClusteringConfig,
+) -> Vec<ClusterResult> {
     // Calculate pairwise FCC
-    let pairwise_fcc = calculate_pairwise_fcc(&contact_sets);
+    let pairwise_fcc = calculate_pairwise_fcc(contact_sets);
 
     // Build similarity graph
-    let elements = create_elements(pairwise_fcc, structures.len(), config);
+    let elements = create_elements(pairwise_fcc, contact_sets.len(), config);
 
     // Perform clustering
     let clusters = cluster_elements(elements);
@@ -323,6 +334,24 @@ mod tests {
         assert!((config.fcc_cutoff - 0.60).abs() < 0.001);
         assert!((config.strictness - 0.75).abs() < 0.001);
         assert_eq!(config.min_cluster_size, 4);
+    }
+
+    #[test]
+    fn test_cluster_contact_sets_groups_similar_sets() {
+        let set =
+            |items: &[&str]| -> HashSet<String> { items.iter().map(|s| s.to_string()).collect() };
+        let sets = vec![
+            set(&["A 1 B 1", "A 2 B 2", "A 3 B 3"]),
+            set(&["A 1 B 1", "A 2 B 2", "A 3 B 3"]),
+            set(&["A 9 B 9"]),
+        ];
+        let config = ClusteringConfig {
+            min_cluster_size: 2,
+            ..ClusteringConfig::default()
+        };
+        let clusters = cluster_contact_sets(&sets, &config);
+        assert_eq!(clusters.len(), 1);
+        assert_eq!(clusters[0].members, vec![0, 1]);
     }
 
     #[test]
