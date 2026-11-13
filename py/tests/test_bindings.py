@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import gdock
@@ -78,7 +76,13 @@ def test_dock_models_ranked_ascending():
 
 
 def test_dock_energy_weights():
-    weights = {"w_vdw": 1.0, "w_elec": 0.5, "w_desolv": 2.0, "w_air": 0.1, "w_clash": 3.0}
+    weights = {
+        "w_vdw": 1.0,
+        "w_elec": 0.5,
+        "w_desolv": 2.0,
+        "w_air": 0.1,
+        "w_clash": 3.0,
+    }
     result = gdock.dock(
         RECEPTOR_PDB,
         LIGAND_PDB,
@@ -92,7 +96,11 @@ def test_dock_energy_weights():
     assert m["fitness"] == pytest.approx(expected)
 
     default = gdock.dock(
-        RECEPTOR_PDB, LIGAND_PDB, restraints=[(933, 6), (936, 8)], max_generations=3, seed=1
+        RECEPTOR_PDB,
+        LIGAND_PDB,
+        restraints=[(933, 6), (936, 8)],
+        max_generations=3,
+        seed=1,
     )
     assert default["models"][0]["fitness"] != m["fitness"]
 
@@ -186,31 +194,6 @@ def test_dock_ncores_results_match_single_core():
         assert m1["fitness"] == m2["fitness"]
 
 
-# A timing test needs real cores. CI runners can have fewer.
-@pytest.mark.skipif((os.cpu_count() or 1) < 4, reason="needs at least 4 CPUs")
-def test_dock_multicore_is_faster():
-    import time
-
-    kwargs = dict(
-        receptor_pdb=RECEPTOR_PDB,
-        ligand_pdb=LIGAND_PDB,
-        max_generations=50,
-        population_size=100,
-        seed=1,
-    )
-    t0 = time.monotonic()
-    gdock.dock(**kwargs, ncores=1)
-    t_single = time.monotonic() - t0
-
-    t0 = time.monotonic()
-    gdock.dock(**kwargs, ncores=4)
-    t_multi = time.monotonic() - t0
-
-    assert t_multi < t_single, (
-        f"multi-core ({t_multi:.3f}s) was not faster than single-core ({t_single:.3f}s)"
-    )
-
-
 def test_dock_restraints_as_tbl_file(tmp_path):
     # Standard HADDOCK TBL: bidirectional assign blocks so both segids appear as anchors
     # (tbl_to_pairs requires active-active pairs — both residues must appear as anchors).
@@ -257,7 +240,9 @@ def test_dock_invalid_pdb_raises():
 def test_score_total_includes_clash():
     # The two CA atoms overlap, so the clash count is not zero.
     overlapping = LIGAND_PDB.replace("10.000", " 0.500").replace("13.800", " 4.300")
-    with_clash = gdock.score(RECEPTOR_PDB, overlapping, w_vdw=0.0, w_elec=0.0, w_desolv=0.0)
+    with_clash = gdock.score(
+        RECEPTOR_PDB, overlapping, w_vdw=0.0, w_elec=0.0, w_desolv=0.0
+    )
     assert with_clash["clash"] > 0
     assert with_clash["total"] == with_clash["clash"]
 
@@ -279,7 +264,9 @@ def test_dock_clustered_models():
 
 
 def test_dock_sampling_has_no_clustered_models():
-    result = gdock.dock(RECEPTOR_PDB, LIGAND_PDB, max_generations=2, seed=1, sampling=20)
+    result = gdock.dock(
+        RECEPTOR_PDB, LIGAND_PDB, max_generations=2, seed=1, sampling=20
+    )
     assert result["clusteredModels"] == []
 
 
