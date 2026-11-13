@@ -9,6 +9,12 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 By participating, you are expected to uphold this code. Please report
 unacceptable behavior to <email@gdock.org>.
 
+## AI Policy
+
+Read the [AI Policy](AI_POLICY.md) before you open an issue or a pull request,
+even if you do not use AI tools. It tells you what AI use is permitted and
+what you must disclose.
+
 ## How to Contribute
 
 ### Reporting Bugs
