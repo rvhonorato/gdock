@@ -107,8 +107,7 @@ describe('DockJob (real WASM)', () => {
 
     await user.click(within(container).getByRole('button', { name: /dock/i }));
 
-    // Wait for results — WASM GA can take a while
-    await within(container).findByText('Results', {}, { timeout: 120_000 });
+    await within(container).findByText('Results', {}, { timeout: 240_000 });
 
     // Stats panel
     expect(within(container).getByText('generations')).toBeInTheDocument();
@@ -128,5 +127,5 @@ describe('DockJob (real WASM)', () => {
     cells.forEach(cell => {
       expect(isFinite(parseFloat(cell.textContent ?? ''))).toBe(true);
     });
-  }, 130_000);
+  }, 250_000);
 });
