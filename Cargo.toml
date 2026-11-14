@@ -5,7 +5,7 @@ resolver = "2"
 
 # One version for the core, the Python bindings and the wasm bindings.
 [workspace.package]
-version = "2.3.0-rc.1"
+version = "2.3.0"
 edition = "2021"
 rust-version = "1.85"
 license = "0BSD"

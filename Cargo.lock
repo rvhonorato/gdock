@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "gdock"
-version = "2.3.0-rc.1"
+version = "2.3.0"
 dependencies = [
  "clap",
  "colored",
@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "gdock-py"
-version = "2.3.0-rc.1"
+version = "2.3.0"
 dependencies = [
  "gdock",
  "pyo3",
@@ -289,7 +289,7 @@ dependencies = [
 
 [[package]]
 name = "gdock-wasm"
-version = "2.3.0-rc.1"
+version = "2.3.0"
 dependencies = [
  "console_error_panic_hook",
  "gdock",
