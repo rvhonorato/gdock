@@ -6,7 +6,7 @@
   "scripts": {
     "wasm": "cd ../wasm && wasm-pack build --target web",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir node_modules/.tmp/ssr && node scripts/prerender.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",

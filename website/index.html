@@ -7,6 +7,15 @@
     <meta name="description" content="gdock docks two proteins with a genetic algorithm and residue restraints. Run it in your browser, on the command line, or from Python." />
     <title>gdock: information-driven protein-protein docking</title>
     <link rel="canonical" href="https://gdock.org/" />
+    <script>
+      // Set the theme before the first paint.
+      try {
+        var t = localStorage.getItem('theme')
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
