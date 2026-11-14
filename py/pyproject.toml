@@ -16,7 +16,7 @@ keywords = [
   "structural-biology",
   "genetic-algorithm",
 ]
-authors = [{ name = "Rodrigo V. Honorato", email = "rvhonorato@pm.me" }]
+authors = [{ name = "Rodrigo V. Honorato", email = "email@rvhonorato.me" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",

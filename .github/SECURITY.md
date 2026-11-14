@@ -10,7 +10,7 @@
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability, please report it responsibly by
-emailing <email@gdock.org>. Do **not** open a public issue.
+emailing <email@rvhonorato.me>. Do **not** open a public issue.
 
 You should expect an initial response within 7 days. The report will be
 investigated and you will be kept informed of progress toward a fix.

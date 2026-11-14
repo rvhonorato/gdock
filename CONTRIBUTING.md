@@ -7,7 +7,7 @@ guidelines to help you get started.
 
 This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report
-unacceptable behavior to <email@gdock.org>.
+unacceptable behavior to <email@rvhonorato.me>.
 
 ## AI Policy
 
