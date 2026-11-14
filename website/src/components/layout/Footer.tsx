@@ -5,8 +5,8 @@ export function Footer() {
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="mb-4">
-              <img src="/media/svg/logo-horizontal-grayscale.svg" alt="gdock" width={878} height={412} loading="lazy" className="h-8 w-auto dark:hidden" />
-              <img src="/media/svg/logo-horizontal-white.svg" alt="gdock" width={878} height={412} loading="lazy" className="h-8 w-auto hidden dark:block opacity-80" />
+              <img src="/media/webp/logo-horizontal-grayscale.webp" alt="gdock" width={205} height={96} loading="lazy" className="h-8 w-auto dark:hidden" />
+              <img src="/media/webp/logo-horizontal-white.webp" alt="gdock" width={205} height={96} loading="lazy" className="h-8 w-auto hidden dark:block opacity-80" />
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Information-driven protein-protein docking using a genetic algorithm.

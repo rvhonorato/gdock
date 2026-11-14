@@ -3,17 +3,18 @@ export function Hero() {
     <section className="py-16 md:py-24 border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
         <img
-          src="/media/svg/logo-vertical-color.svg"
+          src="/media/webp/logo-vertical-color.webp"
           alt="gdock"
-          width={519}
-          height={501}
+          width={664}
+          height={640}
           className="h-64 md:h-80 w-auto mx-auto mb-6 dark:hidden"
         />
         <img
-          src="/media/svg/logo-vertical-white.svg"
+          src="/media/webp/logo-vertical-white.webp"
           alt="gdock"
-          width={519}
-          height={501}
+          loading="lazy"
+          width={664}
+          height={640}
           className="h-64 md:h-80 w-auto mx-auto mb-6 hidden dark:block"
         />
         <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">

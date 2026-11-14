@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource-variable/quicksand";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -44,7 +45,7 @@ code {
 
 /* Heading font to match logo */
 .font-heading {
-  font-family: 'Quicksand', system-ui, sans-serif;
+  font-family: 'Quicksand Variable', system-ui, sans-serif;
 }
 
 /* Hide scrollbar but keep functionality */
