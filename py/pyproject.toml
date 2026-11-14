@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "gdock"
 dynamic = ["version"]
 description = "Information-driven protein-protein docking using a genetic algorithm - Python bindings"
-readme = "README.md"
+readme = "../README.md"
 license = "0BSD"
 requires-python = ">=3.11"
 keywords = [

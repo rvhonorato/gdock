@@ -10,7 +10,7 @@ homepage.workspace = true
 description = "Information-driven protein-protein docking - Python bindings"
 # Released on PyPI, not on crates.io.
 publish = false
-readme = "README.md"
+readme = "../README.md"
 
 [lib]
 name = "_internal"

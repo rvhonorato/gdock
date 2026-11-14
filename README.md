@@ -21,6 +21,34 @@ complexes.
 > A paper describing gdock has been submitted to and is waiting review in the
 > [Journal of Open Source Software (JOSS)](https://joss.theoj.org/).
 
+## Contents
+
+- [Features](#features)
+- [Web Interface](#web-interface)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Docking (`run`)](#docking-run)
+  - [Scoring (`score`)](#scoring-score)
+  - [Generate restraints (`restraints`)](#generate-restraints-restraints)
+- [Command reference](#command-reference)
+- [Input Format](#input-format)
+  - [PDB Files](#pdb-files)
+  - [Restraints](#restraints)
+- [Output](#output)
+- [Python](#python)
+  - [`score`](#score)
+  - [`dock`](#dock)
+  - [Other functions](#other-functions)
+  - [Changes from version 0.5.0](#changes-from-version-050)
+- [Algorithm](#algorithm)
+- [Testing](#testing)
+- [Repository layout](#repository-layout)
+- [Relevant repositories](#relevant-repositories)
+- [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+
 ## Features
 
 - **Fast**: Genetic algorithm with early stopping and elitism
@@ -32,7 +60,7 @@ complexes.
   provided
 - **Clustering**: FCC-based clustering to group similar solutions
 - **Sampling**: Collect a large pool of unique diverse conformations with `--sampling`
-- **Bindings**: Use gdock from Python (`pip install gdock`) or in the browser
+- **Bindings**: Use gdock from [Python](#python) (`pip install gdock`) or in the browser
   (WebAssembly)
 
 ## Web Interface
@@ -291,6 +319,130 @@ statement. gdock keeps only the pairs in which the two residues are active.
 Output structures can be visualized with molecular viewers such as
 [PyMOL](https://pymol.org/) or [ChimeraX](https://www.cgl.ucsf.edu/chimerax/).
 
+## Python
+
+The Python package has the same engine as the command-line tool. It needs
+Python 3.11 or later.
+
+```bash
+pip install gdock
+```
+
+The functions take the contents of the PDB files as strings, not file paths.
+
+```python
+import gdock
+
+receptor_pdb = open("receptor.pdb").read()
+ligand_pdb = open("ligand.pdb").read()
+
+# Score a receptor-ligand complex
+scores = gdock.score(receptor_pdb, ligand_pdb)
+print(scores)  # {"vdw": ..., "elec": ..., "desolv": ..., "clash": ..., "total": ...}
+
+# Run the docking
+result = gdock.dock(
+    receptor_pdb,
+    ligand_pdb,
+    restraints=[(10, 20), (15, 25)],  # (receptor_resseq, ligand_resseq) pairs
+)
+print(f"Generations run: {result['generationsRun']}")
+print(f"Converged early: {result['convergedEarly']}")
+
+best = result["models"][0]
+print(f"Best fitness: {best['fitness']}")
+open("best.pdb", "w").write(best["pdb"])  # receptor + docked ligand
+
+# Use a HADDOCK AIR file for the restraints
+result = gdock.dock(receptor_pdb, ligand_pdb, restraints="ambig.tbl")
+
+# Sampling mode: get a large pool of unique poses, sorted by fitness
+result = gdock.dock(
+    receptor_pdb,
+    ligand_pdb,
+    restraints=[(10, 20), (15, 25)],
+    sampling=500,
+)
+```
+
+### `score`
+
+```python
+score(receptor_pdb, ligand_pdb, w_vdw=0.4, w_elec=0.05, w_desolv=3.4, w_clash=1.0) -> dict
+```
+
+Calculates the energy terms of a complex, without restraints. The result has
+the keys `vdw`, `elec`, `desolv`, `clash` and `total`.
+
+### `dock`
+
+```python
+dock(
+    receptor_pdb,
+    ligand_pdb,
+    restraints=None,
+    max_generations=None,  # default: 250
+    population_size=None,  # default: 150
+    ncores=None,           # default: all available
+    seed=None,             # default: 42
+    sampling=None,
+    w_vdw=0.4,
+    w_elec=0.05,
+    w_desolv=3.4,
+    w_air=1.0,
+    w_clash=1.0,
+) -> dict
+```
+
+Runs the genetic algorithm. `restraints` is a list of
+`(receptor_resseq, ligand_resseq)` pairs, or the path of a HADDOCK AIR `.tbl`
+file. The result is:
+
+```text
+{
+  "generationsRun": int,    # generations that the GA did
+  "convergedEarly": bool,   # True if the GA stopped before max_generations
+  "models": [...],          # models ranked by fitness
+  "clusteredModels": [...]  # cluster centres ranked by fitness
+}
+```
+
+Each model has the keys `rank`, `fitness`, `vdw`, `elec`, `desolv`, `air`,
+`clash`, `clusterSize` and `pdb`. `pdb` is the full complex (receptor and
+docked ligand).
+
+With `sampling=N`, gdock keeps up to N unique poses and returns all of them in
+`models`. `clusteredModels` is then empty.
+
+### Other functions
+
+- `generate_restraints(receptor_pdb, ligand_pdb, cutoff=5.0, mode="ambig")`:
+  Finds restraint pairs from the interface of a complex in the bound position.
+  `mode` is `"ambig"` or `"unambig"`, as in the `restraints` subcommand. The
+  result is valid input for `dock`.
+- `tbl_to_pairs(tbl)`: Converts the text of a HADDOCK AIR `.tbl` file into
+  restraint pairs.
+- `contacts(receptor_pdb, ligand_pdb, cutoff=5.0)`: Returns the sorted list of
+  the inter-chain contacts of a complex.
+- `cluster_contacts(contact_sets, fcc_cutoff=0.6, min_cluster_size=4)`:
+  Clusters models by their fraction of common contacts (FCC). `contact_sets`
+  has one result of `contacts` for each model. Each cluster has the keys
+  `centerIdx`, `members` and `size`. The largest cluster is first.
+
+### Changes from version 0.5.0
+
+The Python package now has the same version number as the core crate. Thus,
+the version after 0.5.0 is 2.3.0.
+
+- `dock`: `models` now has the models ranked by fitness. The cluster centres,
+  which were in `models`, are now in `clusteredModels`.
+- `dock`: each model has the new keys `clash` and `clusterSize`.
+- `dock`: the weights of the energy terms are new parameters.
+- `score`: the result has the new key `clash`, and `total` includes the clash
+  term.
+- `generate_restraints`, `tbl_to_pairs`, `contacts` and `cluster_contacts` are
+  new.
+
 ## Algorithm
 
 gdock uses:
@@ -332,15 +484,9 @@ share one version number.
 | Directory | Contents |
 |-----------|----------|
 | `src/` | Core library and command-line tool ([crates.io](https://crates.io/crates/gdock)) |
-| `py/` | Python bindings ([PyPI](https://pypi.org/project/gdock/)), see [py/README.md](py/README.md) |
+| `py/` | Python bindings ([PyPI](https://pypi.org/project/gdock/)), see [Python](#python) |
 | `wasm/` | WebAssembly bindings, see [wasm/README.md](wasm/README.md) |
 | `website/` | Source of [gdock.org](https://gdock.org), see [website/README.md](website/README.md) |
-
-To use gdock from Python:
-
-```bash
-pip install gdock
-```
 
 ## Relevant repositories
 
