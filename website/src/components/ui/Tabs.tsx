@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { ReactNode } from 'react'
 
 interface Tab {
@@ -14,15 +14,21 @@ interface TabsProps {
 
 export function Tabs({ tabs, defaultTab }: TabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id)
-
-  const activeContent = tabs.find(tab => tab.id === activeTab)?.content
+  const baseId = useId()
 
   return (
     <div>
-      <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 -mx-2 px-2 scrollbar-hide">
+      <div
+        role="tablist"
+        className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-700 -mx-2 px-2 scrollbar-hide"
+      >
         {tabs.map(tab => (
           <button
             key={tab.id}
+            role="tab"
+            id={`${baseId}-tab-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`${baseId}-panel-${tab.id}`}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
               activeTab === tab.id
@@ -34,9 +40,19 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
           </button>
         ))}
       </div>
-      <div className="pt-4">
-        {activeContent}
-      </div>
+      {/* All panels stay in the DOM, so crawlers and page search find their text. */}
+      {tabs.map(tab => (
+        <div
+          key={tab.id}
+          role="tabpanel"
+          id={`${baseId}-panel-${tab.id}`}
+          aria-labelledby={`${baseId}-tab-${tab.id}`}
+          hidden={activeTab !== tab.id}
+          className="pt-4"
+        >
+          {tab.content}
+        </div>
+      ))}
     </div>
   )
 }
