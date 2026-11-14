@@ -104,21 +104,9 @@ wasm-pack test --node
 
 ### Website (`website/`)
 
-You need Node.js and wasm-pack. The website uses the wasm package from
-`wasm/`, thus build that package first. The browser tests need the Chromium
-browser of Playwright.
-
-```bash
-cd website
-npm run wasm
-npm ci
-npm run lint
-npx playwright install chromium
-npm test
-npm run build
-```
-
-See the [Website](README.md#website) section of the README for more information.
+The setup and the commands are in the
+[Website](README.md#website) section of the README. Run `npm run lint`,
+`npm test` and `npm run build` before you open a pull request.
 
 ## Project Structure
 

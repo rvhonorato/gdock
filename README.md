@@ -7,7 +7,7 @@
 [![ci](https://codeberg.org/rvhonorato/gdock/badges/workflows/ci.yml/badge.svg)](https://codeberg.org/rvhonorato/gdock/actions?workflow=ci.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/23671025da8a4334a754d8d5af76a34a)](https://app.codacy.com/gh/rvhonorato/gdock/dashboard)
 
-<img src="imgs/gdock_logo.png" alt="gdock_logo" width="350">
+<img src="https://codeberg.org/rvhonorato/gdock/raw/branch/main/imgs/gdock_logo.png" alt="gdock_logo" width="350">
 
 > **The main source repository has moved to
 > [Codeberg](https://codeberg.org/rvhonorato/gdock).** GitHub remains available
@@ -18,42 +18,23 @@ restraints and energy components to guide the docking process. It combines a
 genetic algorithm with physics-based scoring to find optimal protein-protein
 complexes.
 
-> A paper describing gdock has been submitted to and is waiting review in the
-> [Journal of Open Source Software (JOSS)](https://joss.theoj.org/).
+A web interface is available at [gdock.org](https://gdock.org) for running
+docking jobs without installing anything locally.
 
 ## Contents
 
 - [Features](#features)
-- [Web Interface](#web-interface)
-- [Quick Start](#quick-start)
 - [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Usage](#usage)
-  - [Docking (`run`)](#docking-run)
-  - [Scoring (`score`)](#scoring-score)
-  - [Generate restraints (`restraints`)](#generate-restraints-restraints)
 - [Command reference](#command-reference)
 - [Input Format](#input-format)
-  - [PDB Files](#pdb-files)
-  - [Restraints](#restraints)
 - [Output](#output)
-- [Python](#python)
-  - [`score`](#score)
-  - [`dock`](#dock)
-  - [Other functions](#other-functions)
-  - [Changes from version 0.5.0](#changes-from-version-050)
-- [WebAssembly](#webassembly)
-  - [Build](#build)
-  - [JavaScript usage](#javascript-usage)
-  - [Functions](#functions)
-- [Website](#website)
-  - [Development](#development)
-  - [Key files](#key-files)
-  - [`.gdock` file format](#gdock-file-format)
-  - [Deployment](#deployment)
 - [Algorithm](#algorithm)
-- [Testing](#testing)
+- [Python](#python)
+- [WebAssembly](#webassembly)
+- [Website](#website)
 - [Repository layout](#repository-layout)
-- [Relevant repositories](#relevant-repositories)
 - [Contributing](#contributing)
 - [Citation](#citation)
 - [License](#license)
@@ -72,31 +53,6 @@ complexes.
 - **Bindings**: Use gdock from [Python](#python) (`pip install gdock`) or in the browser
   ([WebAssembly](#webassembly))
 
-## Web Interface
-
-A web interface is available at [gdock.org](https://gdock.org) for running
-docking jobs without installing anything locally.
-
-## Quick Start
-
-```bash
-# Install
-cargo install gdock
-
-# Prepare some input data
-curl -sL https://files.rcsb.org/download/2OOB.pdb -o 2OOB.pdb
-awk '/^ATOM/ && substr($0,22,1)=="A"' 2OOB.pdb > 2oob_A.pdb
-awk '/^ATOM/ && substr($0,22,1)=="B"' 2OOB.pdb > 2oob_B.pdb
-
-# Run docking
-gdock run \
-  --receptor 2oob_A.pdb \
-  --ligand 2oob_B.pdb \
-  --restraints 933:6,936:8,940:42,941:44,946:45,950:46
-```
-
-Most docking runs complete in ~15 seconds on standard hardware.
-
 ## Installation
 
 ```bash
@@ -112,6 +68,23 @@ cargo build --release
 ```
 
 Requires [Rust](https://www.rust-lang.org/tools/install) 1.85 or later.
+
+## Quick Start
+
+```bash
+# Prepare some input data
+curl -sL https://files.rcsb.org/download/2OOB.pdb -o 2OOB.pdb
+awk '/^ATOM/ && substr($0,22,1)=="A"' 2OOB.pdb > 2oob_A.pdb
+awk '/^ATOM/ && substr($0,22,1)=="B"' 2OOB.pdb > 2oob_B.pdb
+
+# Run docking
+gdock run \
+  --receptor 2oob_A.pdb \
+  --ligand 2oob_B.pdb \
+  --restraints 933:6,936:8,940:42,941:44,946:45,950:46
+```
+
+Most docking runs complete in ~15 seconds on standard hardware.
 
 ## Usage
 
@@ -138,17 +111,7 @@ gdock run \
   --reference native.pdb
 ```
 
-Additional options:
-
-- `-o, --output-dir <DIR>`: Output directory (default: current directory)
-- `-n, --nproc <NUM>`: Number of processors (default: total - 2)
-- `--no-clust`: Disable clustering
-- `--sampling <NUM>`: Collect up to NUM unique poses sorted by fitness into `sampling/`
-- `--epoch`: Write the trace of all individuals of all generations to `epoch.tsv.gz`
-- `--w_vdw`, `--w_elec`, `--w_desolv`, `--w_air`, `--w_clash`: Custom energy
-  weights (`--w_clash 0` disables the clash penalty)
-- `--debug`: Use DockQ as the fitness (requires `--reference`). This is for
-  development only.
+See the [Command reference](#command-reference) for all options.
 
 #### Sampling mode
 
@@ -164,9 +127,7 @@ gdock run \
   --sampling 500
 ```
 
-All unique conformations discovered by the GA (up to N) are written to
-`sampling/gdock_1.pdb`, `sampling/gdock_2.pdb`, … sorted by fitness (best first),
-alongside a `sampling/sampling.tsv` with per-model scores and energy components.
+The poses are written to the `sampling/` directory (see [Output](#output)).
 The normal `model_*.pdb` / `ranked_*.pdb` output is still produced.
 
 ### Scoring (`score`)
@@ -302,13 +263,6 @@ or other information sources.
 - The path of a HADDOCK AIR file. The file name must end in `.tbl`. Only the
   `run` subcommand accepts this format.
 
-```bash
-gdock run \
-  --receptor receptor.pdb \
-  --ligand ligand.pdb \
-  --restraints ambig.tbl
-```
-
 gdock reads the `.tbl` file as follows. The segid of the first `assign` statement is the
 receptor. A residue is active if it is the first selection of an `assign`
 statement. gdock keeps only the pairs in which the two residues are active.
@@ -327,6 +281,25 @@ statement. gdock keeps only the pairs in which the two residues are active.
 
 Output structures can be visualized with molecular viewers such as
 [PyMOL](https://pymol.org/) or [ChimeraX](https://www.cgl.ucsf.edu/chimerax/).
+
+## Algorithm
+
+gdock uses:
+
+- **Genetic Algorithm**: Population of 150, elitism (top 5), tournament
+  selection
+- **Energy Function**: VDW + Electrostatics + Desolvation + AIR restraints +
+  Clashes
+- **Restraints**: HADDOCK-style ambiguous interaction restraints (AIR). The
+  effective distance of a restraint is calculated from all heavy-atom pairs.
+  There is no penalty up to 4 Angstrom. Above that, a soft-square potential
+  applies: quadratic for the first Angstrom, then linear.
+- **Clashes**: Number of atom pairs that are closer than the sum of their van
+  der Waals radii
+- **Early Stopping**: Converges when no improvement for 50 generations
+- **Hall of Fame**: Keeps the unique poses of all generations. If two poses are
+  almost the same, it keeps the better one.
+- **Clustering**: FCC-based clustering of the Hall of Fame
 
 ## Python
 
@@ -494,29 +467,26 @@ to keep the page responsive.
 
 ### Functions
 
-The PDB arguments are the contents of the files, as strings. A parameter with
-`?` is optional.
+The functions do the same work as the [Python](#python) functions. A
+parameter with `?` is optional.
 
-- `score_structures(receptor_pdb, ligand_pdb, w_vdw, w_elec, w_desolv, w_clash?)`:
-  Calculates the energy terms of a complex, without restraints. The result
-  has the fields `vdw`, `elec`, `desolv`, `clash` and `total`.
-- `run_docking(receptor_pdb, ligand_pdb, restraint_pairs_json, max_generations?,
-  seed?, population_size?, sampling?, w_vdw?, w_elec?, w_desolv?, w_air?, w_clash?)`:
-  Runs the genetic algorithm. `restraint_pairs_json` is a JSON array of
-  `[receptor_resseq, ligand_resseq]` pairs, for example `"[[10,5],[22,8]]"`.
-  Use `"[]"` for a docking without restraints. `max_generations` and `seed`
-  are `BigInt` values, for example `250n`.
-- `generate_restraints(receptor_pdb, ligand_pdb, cutoff?, mode?)`: Finds
-  restraint pairs from the interface of a complex in the bound position.
-  `mode` is `"ambig"` (default) or `"unambig"`.
-- `tbl_to_pairs(tbl)`: Converts the text of a HADDOCK AIR `.tbl` file into
-  restraint pairs.
-- `compute_contacts(receptor_pdb, ligand_pdb)`: Returns the sorted list of the
-  inter-chain contacts of a complex (5 Angstrom cutoff).
-- `cluster_from_contacts(contacts_json, fcc_cutoff?, min_cluster_size?)`:
-  Clusters models by their fraction of common contacts (FCC). `contacts_json`
-  is a JSON array with one result of `compute_contacts` for each model. Each
-  cluster has the fields `centerIdx`, `members` and `size`.
+| Function | Python function |
+|---|---|
+| `score_structures(receptor_pdb, ligand_pdb, w_vdw, w_elec, w_desolv, w_clash?)` | `score` |
+| `run_docking(receptor_pdb, ligand_pdb, restraint_pairs_json, max_generations?, seed?, population_size?, sampling?, w_vdw?, w_elec?, w_desolv?, w_air?, w_clash?)` | `dock` |
+| `generate_restraints(receptor_pdb, ligand_pdb, cutoff?, mode?)` | `generate_restraints` |
+| `tbl_to_pairs(tbl)` | `tbl_to_pairs` |
+| `compute_contacts(receptor_pdb, ligand_pdb)` | `contacts` |
+| `cluster_from_contacts(contacts_json, fcc_cutoff?, min_cluster_size?)` | `cluster_contacts` |
+
+The differences from the Python functions are:
+
+- `restraint_pairs_json` and `contacts_json` are JSON strings, for example
+  `"[[10,5],[22,8]]"`. Use `"[]"` for a docking without restraints.
+- `max_generations` and `seed` are `BigInt` values, for example `250n`.
+- `compute_contacts` has a fixed cutoff of 5 Angstrom.
+- A pose has `ligandPdb`, the docked ligand without the receptor, and not
+  `pdb`.
 
 The result of `run_docking` is:
 
@@ -530,11 +500,8 @@ The result of `run_docking` is:
 ```
 
 Each pose has the fields `rank`, `fitness`, `vdw`, `elec`, `desolv`, `air`,
-`clash`, `clusterSize` and `ligandPdb`. `ligandPdb` is the docked ligand only,
-without the receptor.
-
-With `sampling`, gdock keeps up to that number of unique poses and returns all
-of them in `rankedPoses`. `clusteredPoses` is then empty.
+`clash`, `clusterSize` and `ligandPdb`. With `sampling`, `rankedPoses` has all
+the poses and `clusteredPoses` is empty.
 
 ## Website
 
@@ -544,26 +511,26 @@ is a React + Vite + Tailwind page with an in-browser docking engine, the
 
 ### Development
 
-Run these commands in `website/`:
+You need Node.js and the tools of the WebAssembly [Build](#build). Do the
+setup in `website/`:
 
 ```bash
-npm run wasm         # build gdock-wasm from wasm/
-npm ci               # install the dependencies
-npm run dev          # start dev server (http://localhost:5173)
-npm run build        # tsc + vite build, the result is in dist/
-npm run preview      # serve dist/ locally to check prod build
-npm run lint         # eslint
-npm test             # vitest: unit tests and browser tests
+npm run wasm                     # build gdock-wasm from wasm/
+npm ci                           # install the dependencies
+npx playwright install chromium  # browser for the tests, one time only
 ```
 
 `gdock-wasm` comes from the `wasm/` directory of this repository, not from
-npm. `npm run wasm` needs wasm-pack and the `wasm32-unknown-unknown` target.
-Run it before `npm ci`, and run it again after a change in `src/` or `wasm/`.
+npm. Run `npm run wasm` again after a change in `src/` or `wasm/`.
 
-The browser tests (`*.browser.test.tsx`) run in Chromium. Install it one time:
+Then use these commands:
 
 ```bash
-npx playwright install chromium
+npm run dev          # start dev server (http://localhost:5173)
+npm run lint         # eslint
+npm test             # vitest: unit tests and browser tests
+npm run build        # tsc + vite build, the result is in dist/
+npm run preview      # serve dist/ locally to check prod build
 ```
 
 ### Key files
@@ -608,47 +575,12 @@ The CAPRI tab saves a different payload in the same container. It has
 
 ### Deployment
 
-The site is static. There is no server-side component.
-
-The `website` workflow (`.forgejo/workflows/website.yml`) does the deployment.
-On each push to `main`, it builds `gdock-wasm`, runs the lint and the tests,
-builds the site, and uploads `dist/` to Codeberg Pages (gdock.org).
+The site is static. There is no server-side component. On each push to
+`main`, the `website` workflow (`.forgejo/workflows/website.yml`) builds the
+site and uploads `dist/` to Codeberg Pages.
 
 Vite bundles the workers and the WASM file. The site does not use
 `SharedArrayBuffer`, thus it needs no COOP/COEP headers.
-
-## Algorithm
-
-gdock uses:
-
-- **Genetic Algorithm**: Population of 150, elitism (top 5), tournament
-  selection
-- **Energy Function**: VDW + Electrostatics + Desolvation + AIR restraints +
-  Clashes
-- **Restraints**: HADDOCK-style ambiguous interaction restraints (AIR). The
-  effective distance of a restraint is calculated from all heavy-atom pairs.
-  There is no penalty up to 4 Angstrom. Above that, a soft-square potential
-  applies: quadratic for the first Angstrom, then linear.
-- **Clashes**: Number of atom pairs that are closer than the sum of their van
-  der Waals radii
-- **Early Stopping**: Converges when no improvement for 50 generations
-- **Hall of Fame**: Keeps the unique poses of all generations. If two poses are
-  almost the same, it keeps the better one.
-- **Clustering**: FCC-based clustering of the Hall of Fame
-
-## Testing
-
-Run the test suite:
-
-```bash
-cargo test
-```
-
-The test suite includes 209 tests covering parsing, energy calculations, and
-algorithm behavior.
-
-The bindings and the website have their own tests. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for the commands.
 
 ## Repository layout
 
@@ -662,25 +594,17 @@ share one version number.
 | `wasm/` | WebAssembly bindings, see [WebAssembly](#webassembly) |
 | `website/` | Source of [gdock.org](https://gdock.org), see [Website](#website) |
 
-## Relevant repositories
-
-- [`gdock-benchmark`](https://codeberg.org/rvhonorato/gdock-benchmark): repository
-containing all scripts and raw data relevant to benchmarking the performance
-of `gdock`
+The scripts and the raw data of the benchmark are in a different repository,
+[`gdock-benchmark`](https://codeberg.org/rvhonorato/gdock-benchmark).
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests
 on [Codeberg](https://codeberg.org/rvhonorato/gdock).
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [AI Policy](AI_POLICY.md)
-first.
-
-Before submitting a pull request, please ensure:
-
-- All tests pass (`cargo test`)
-- Code is formatted (`cargo fmt`)
-- Linting passes (`cargo clippy`)
+Read [CONTRIBUTING.md](https://codeberg.org/rvhonorato/gdock/src/branch/main/CONTRIBUTING.md) and the [AI Policy](https://codeberg.org/rvhonorato/gdock/src/branch/main/AI_POLICY.md)
+first. `CONTRIBUTING.md` has the tests and the checks that a pull request must
+pass.
 
 ## Citation
 
@@ -688,8 +612,6 @@ If you use gdock in your research, please cite:
 
 - Vargas Honorato, R. gdock: Information-Driven Protein-Protein Docking Using a Genetic Algorithm. (Zenodo, 2026). doi:[10.5281/zenodo.18863557](https://doi.org/10.5281/zenodo.18863557). 
 
-[_A JOSS paper has been submitted and is waiting for review_](https://gdock.org/gdock_paper_submitted.pdf).
-
 ## License
 
-BSD Zero Clause License. See [LICENSE](LICENSE) file.
+BSD Zero Clause License. See [LICENSE](https://codeberg.org/rvhonorato/gdock/src/branch/main/LICENSE) file.
