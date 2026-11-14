@@ -34,4 +34,3 @@ Repository = "https://codeberg.org/rvhonorato/gdock"
 features = ["extension-module"]
 python-source = "python"
 module-name = "gdock._internal"
-manylinux = "2014"
