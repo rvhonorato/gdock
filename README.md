@@ -41,6 +41,15 @@ complexes.
   - [`dock`](#dock)
   - [Other functions](#other-functions)
   - [Changes from version 0.5.0](#changes-from-version-050)
+- [WebAssembly](#webassembly)
+  - [Build](#build)
+  - [JavaScript usage](#javascript-usage)
+  - [Functions](#functions)
+- [Website](#website)
+  - [Development](#development)
+  - [Key files](#key-files)
+  - [`.gdock` file format](#gdock-file-format)
+  - [Deployment](#deployment)
 - [Algorithm](#algorithm)
 - [Testing](#testing)
 - [Repository layout](#repository-layout)
@@ -61,7 +70,7 @@ complexes.
 - **Clustering**: FCC-based clustering to group similar solutions
 - **Sampling**: Collect a large pool of unique diverse conformations with `--sampling`
 - **Bindings**: Use gdock from [Python](#python) (`pip install gdock`) or in the browser
-  (WebAssembly)
+  ([WebAssembly](#webassembly))
 
 ## Web Interface
 
@@ -443,6 +452,171 @@ the version after 0.5.0 is 2.3.0.
 - `generate_restraints`, `tbl_to_pairs`, `contacts` and `cluster_contacts` are
   new.
 
+## WebAssembly
+
+The `wasm/` directory has the WebAssembly bindings (`gdock-wasm`). They run
+the docking in the browser, without a server. [gdock.org](https://gdock.org)
+uses them.
+
+The package is not released on npm or crates.io. Build it from this
+repository.
+
+### Build
+
+```bash
+# Install wasm-pack and the wasm target, if necessary
+cargo install wasm-pack
+rustup target add wasm32-unknown-unknown
+
+cd wasm
+wasm-pack build --target web
+```
+
+The package is written to `wasm/pkg/`.
+
+### JavaScript usage
+
+```ts
+import init, { run_docking, score_structures } from "./pkg/gdock_wasm.js";
+
+await init();
+
+const scores = score_structures(receptorPdb, ligandPdb, 0.4, 0.05, 3.4);
+console.log(scores.total);
+
+const pairs = JSON.stringify([[933, 6], [936, 8]]);
+const result = run_docking(receptorPdb, ligandPdb, pairs);
+console.log(result.rankedPoses[0].ligandPdb);
+```
+
+`run_docking` blocks until the docking is complete. Call it from a Web Worker
+to keep the page responsive.
+
+### Functions
+
+The PDB arguments are the contents of the files, as strings. A parameter with
+`?` is optional.
+
+- `score_structures(receptor_pdb, ligand_pdb, w_vdw, w_elec, w_desolv, w_clash?)`:
+  Calculates the energy terms of a complex, without restraints. The result
+  has the fields `vdw`, `elec`, `desolv`, `clash` and `total`.
+- `run_docking(receptor_pdb, ligand_pdb, restraint_pairs_json, max_generations?,
+  seed?, population_size?, sampling?, w_vdw?, w_elec?, w_desolv?, w_air?, w_clash?)`:
+  Runs the genetic algorithm. `restraint_pairs_json` is a JSON array of
+  `[receptor_resseq, ligand_resseq]` pairs, for example `"[[10,5],[22,8]]"`.
+  Use `"[]"` for a docking without restraints. `max_generations` and `seed`
+  are `BigInt` values, for example `250n`.
+- `generate_restraints(receptor_pdb, ligand_pdb, cutoff?, mode?)`: Finds
+  restraint pairs from the interface of a complex in the bound position.
+  `mode` is `"ambig"` (default) or `"unambig"`.
+- `tbl_to_pairs(tbl)`: Converts the text of a HADDOCK AIR `.tbl` file into
+  restraint pairs.
+- `compute_contacts(receptor_pdb, ligand_pdb)`: Returns the sorted list of the
+  inter-chain contacts of a complex (5 Angstrom cutoff).
+- `cluster_from_contacts(contacts_json, fcc_cutoff?, min_cluster_size?)`:
+  Clusters models by their fraction of common contacts (FCC). `contacts_json`
+  is a JSON array with one result of `compute_contacts` for each model. Each
+  cluster has the fields `centerIdx`, `members` and `size`.
+
+The result of `run_docking` is:
+
+```text
+{
+  "generationsRun": 100,
+  "convergedEarly": false,
+  "clusteredPoses": [...],  // cluster centres ranked by fitness
+  "rankedPoses": [...]      // poses ranked by fitness
+}
+```
+
+Each pose has the fields `rank`, `fitness`, `vdw`, `elec`, `desolv`, `air`,
+`clash`, `clusterSize` and `ligandPdb`. `ligandPdb` is the docked ligand only,
+without the receptor.
+
+With `sampling`, gdock keeps up to that number of unique poses and returns all
+of them in `rankedPoses`. `clusteredPoses` is then empty.
+
+## Website
+
+The `website/` directory has the source of [gdock.org](https://gdock.org). It
+is a React + Vite + Tailwind page with an in-browser docking engine, the
+[WebAssembly](#webassembly) bindings.
+
+### Development
+
+Run these commands in `website/`:
+
+```bash
+npm run wasm         # build gdock-wasm from wasm/
+npm ci               # install the dependencies
+npm run dev          # start dev server (http://localhost:5173)
+npm run build        # tsc + vite build, the result is in dist/
+npm run preview      # serve dist/ locally to check prod build
+npm run lint         # eslint
+npm test             # vitest: unit tests and browser tests
+```
+
+`gdock-wasm` comes from the `wasm/` directory of this repository, not from
+npm. `npm run wasm` needs wasm-pack and the `wasm32-unknown-unknown` target.
+Run it before `npm ci`, and run it again after a change in `src/` or `wasm/`.
+
+The browser tests (`*.browser.test.tsx`) run in Chromium. Install it one time:
+
+```bash
+npx playwright install chromium
+```
+
+### Key files
+
+| Path | What it does |
+|---|---|
+| `website/src/components/sections/Gdock.tsx` | Tabs of the in-browser tool |
+| `website/src/components/sections/gdock/ScoreJob.tsx` | Score tab |
+| `website/src/components/sections/gdock/DockJob.tsx` | Dock tab, `.gdock` save/restore |
+| `website/src/components/sections/gdock/CapriJob.tsx` | CAPRI tab, `.gdock` save/restore |
+| `website/src/hooks/useGdockWasm.ts` | Typed wrappers of the WASM functions; `runDocking()` starts the worker |
+| `website/src/docking.worker.ts` | Web Worker that calls WASM `run_docking` |
+| `website/src/components/MolstarViewer.tsx` | Mol* v5 viewer (all panels hidden) |
+| `website/src/components/DockResultCard.tsx` | Per-pose card with 3D viewer |
+
+### `.gdock` file format
+
+The Dock tab saves a job as gzip-compressed JSON (`fflate.gzipSync`):
+
+```text
+{
+  "version": 1,
+  "receptorPdb": "...",
+  "ligandPdb": "...",
+  "restraintPairs": [[933, 6], [936, 8]],
+  "result": {
+    "generationsRun": 66,
+    "convergedEarly": true,
+    "executionTimeMs": 14300,
+    "clusteredPoses": [...],
+    "rankedPoses": [...]
+  }
+}
+```
+
+The filename is `gdock_<8hexchars>.gdock`. The hex characters are a djb2 hash
+of receptor + ligand + restraint pairs.
+
+The CAPRI tab saves a different payload in the same container. It has
+`"type": "capri"` and the fields `ensemblePdb`, `chainRoles`, `results`,
+`subForm` and `selectedIndices`. The filename is `capri_T<target>.gdock`.
+
+### Deployment
+
+The site is static. There is no server-side component.
+
+The `website` workflow (`.forgejo/workflows/website.yml`) does the deployment.
+On each push to `main`, it builds `gdock-wasm`, runs the lint and the tests,
+builds the site, and uploads `dist/` to Codeberg Pages (gdock.org).
+
+Vite bundles the workers and the WASM file. The site does not use
+`SharedArrayBuffer`, thus it needs no COOP/COEP headers.
+
 ## Algorithm
 
 gdock uses:
@@ -485,8 +659,8 @@ share one version number.
 |-----------|----------|
 | `src/` | Core library and command-line tool ([crates.io](https://crates.io/crates/gdock)) |
 | `py/` | Python bindings ([PyPI](https://pypi.org/project/gdock/)), see [Python](#python) |
-| `wasm/` | WebAssembly bindings, see [wasm/README.md](wasm/README.md) |
-| `website/` | Source of [gdock.org](https://gdock.org), see [website/README.md](website/README.md) |
+| `wasm/` | WebAssembly bindings, see [WebAssembly](#webassembly) |
+| `website/` | Source of [gdock.org](https://gdock.org), see [Website](#website) |
 
 ## Relevant repositories
 
