@@ -3,8 +3,6 @@ name: release
 on:
   push:
     tags: ["v*"]
-    # TEMP: time test of the build, remove before the merge
-    branches: [py-release]
 
 env:
   CARGO_TERM_COLOR: always
