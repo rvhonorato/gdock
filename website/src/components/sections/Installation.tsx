@@ -4,7 +4,7 @@ const steps = [
   {
     number: 1,
     title: 'Install via Cargo',
-    description: 'Install directly from crates.io. Requires Rust 1.70 or later.',
+    description: 'Install directly from crates.io. Requires Rust 1.85 or later.',
     code: `cargo install gdock`,
     note: (
       <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
@@ -67,7 +67,7 @@ export function Installation() {
           Installation
         </h2>
         <p className="text-slate-600 dark:text-slate-400 text-center mb-12 max-w-2xl mx-auto">
-          Install gdock via <code className="text-sm bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">cargo install</code> or build from source. Requires Rust 1.70 or later.
+          Install gdock via <code className="text-sm bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">cargo install</code> or build from source. Requires Rust 1.85 or later.
         </p>
 
         <div className="space-y-0">

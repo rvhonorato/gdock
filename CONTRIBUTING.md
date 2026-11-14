@@ -47,7 +47,7 @@ cd gdock
 cargo build
 ```
 
-Requires [Rust](https://www.rust-lang.org/tools/install) 1.70 or later.
+Requires [Rust](https://www.rust-lang.org/tools/install) 1.85 or later.
 
 ## Quality Checks
 

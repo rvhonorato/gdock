@@ -7,6 +7,7 @@ resolver = "2"
 [workspace.package]
 version = "2.3.0-rc.1"
 edition = "2021"
+rust-version = "1.85"
 license = "0BSD"
 authors = ["Rodrigo V. Honorato <rvhonorato@protonmail.com>"]
 repository = "https://codeberg.org/rvhonorato/gdock"
@@ -21,6 +22,7 @@ serde_json = "1.0"
 name = "gdock"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Information-driven protein-protein docking using a genetic algorithm"
