@@ -2,10 +2,14 @@
 
 **Information-driven protein-protein docking using a genetic algorithm**
 
-[![DOI](https://zenodo.org/badge/264535556.svg)](https://doi.org/10.5281/zenodo.18863556)
 ![License](https://img.shields.io/badge/license-0BSD-blue)
+[![DOI](https://zenodo.org/badge/264535556.svg)](https://doi.org/10.5281/zenodo.18863556)
+
 [![ci](https://codeberg.org/rvhonorato/gdock/badges/workflows/ci.yml/badge.svg)](https://codeberg.org/rvhonorato/gdock/actions?workflow=ci.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/23671025da8a4334a754d8d5af76a34a)](https://app.codacy.com/gh/rvhonorato/gdock/dashboard)
+[![py](https://codeberg.org/rvhonorato/gdock/badges/workflows/py.yml/badge.svg)](https://codeberg.org/rvhonorato/gdock/actions?workflow=py.yml)
+![Crates.io Version](https://img.shields.io/crates/v/gdock)
+![PyPI Python Version](https://img.shields.io/pypi/pyversions/gdock)
+
 
 <img src="https://codeberg.org/rvhonorato/gdock/raw/branch/main/imgs/gdock_logo.png" alt="gdock_logo" width="350">
 
