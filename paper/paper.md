@@ -34,7 +34,7 @@ physics-based energy function. Written entirely in Rust, `gdock` compiles to a
 single executable with no external dependencies, making it straightforward to
 install and integrate into automated workflows. On a standard workstation, most
 docking runs complete in under 20 seconds. Documentation and source code are
-available at <https://github.com/rvhonorato/gdock> and <https://gdock.org>.
+available at <https://codeberg.org/rvhonorato/gdock> and <https://gdock.org>.
 
 # Statement of need
 
@@ -158,7 +158,7 @@ on restraint quality. As a rigid-body method, `gdock` is best suited for cases
 where conformational changes upon binding are minimal.
 
 Scripts to reproduce these experiments are available at:
-<https://github.com/rvhonorato/gdock-benchmark>.
+<https://codeberg.org/rvhonorato/gdock-benchmark>.
 
 # AI usage disclosure
 

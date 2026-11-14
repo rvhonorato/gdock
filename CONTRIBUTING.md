@@ -19,7 +19,7 @@ what you must disclose.
 
 ### Reporting Bugs
 
-Open an [issue](https://github.com/rvhonorato/gdock/issues) with:
+Open an [issue](https://codeberg.org/rvhonorato/gdock/issues) with:
 
 - A clear description of the problem
 - Steps to reproduce the behavior
@@ -29,7 +29,7 @@ Open an [issue](https://github.com/rvhonorato/gdock/issues) with:
 
 ### Suggesting Features
 
-Open an [issue](https://github.com/rvhonorato/gdock/issues) describing the
+Open an [issue](https://codeberg.org/rvhonorato/gdock/issues) describing the
 feature, its use case, and how it fits into the existing docking workflow.
 
 ### Submitting Pull Requests
@@ -42,7 +42,7 @@ feature, its use case, and how it fits into the existing docking workflow.
 ## Development Setup
 
 ```bash
-git clone https://github.com/<your-username>/gdock.git
+git clone https://codeberg.org/<your-username>/gdock.git
 cd gdock
 cargo build
 ```

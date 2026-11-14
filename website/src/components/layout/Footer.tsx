@@ -22,12 +22,12 @@ export function Footer() {
             <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-3">Links</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="https://github.com/rvhonorato/gdock" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
-                  GitHub Repository
+                <a href="https://codeberg.org/rvhonorato/gdock" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
+                  Codeberg Repository
                 </a>
               </li>
               <li>
-                <a href="https://github.com/rvhonorato/gdock-benchmark" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
+                <a href="https://codeberg.org/rvhonorato/gdock-benchmark" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
                   Benchmark Data
                 </a>
               </li>
@@ -37,7 +37,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://github.com/rvhonorato/gdock/issues" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
+                <a href="https://codeberg.org/rvhonorato/gdock/issues" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
                   Report Issues
                 </a>
               </li>

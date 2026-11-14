@@ -92,7 +92,7 @@ export function CapriJob() {
     // REMARK 1 — method (fixed)
     lines.push('REMARK   1');
     lines.push('REMARK   1 Models scored with gdock v2.0.0 - gdock.org');
-    lines.push('REMARK   1 https://github.com/rvhonorato/gdock');
+    lines.push('REMARK   1 https://codeberg.org/rvhonorato/gdock');
 
     // REMARK 2 — reference
     lines.push('REMARK   2 REFERENCE 1');

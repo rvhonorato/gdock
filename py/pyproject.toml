@@ -28,7 +28,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://gdock.org"
-Repository = "https://github.com/rvhonorato/gdock"
+Repository = "https://codeberg.org/rvhonorato/gdock"
 
 [tool.maturin]
 features = ["extension-module"]
