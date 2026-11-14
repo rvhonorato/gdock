@@ -6,9 +6,8 @@
 [![DOI](https://zenodo.org/badge/264535556.svg)](https://doi.org/10.5281/zenodo.18863556)
 
 [![ci](https://codeberg.org/rvhonorato/gdock/badges/workflows/ci.yml/badge.svg)](https://codeberg.org/rvhonorato/gdock/actions?workflow=ci.yml)
-![Crates.io Version](https://img.shields.io/crates/v/gdock)
-
 [![py](https://codeberg.org/rvhonorato/gdock/badges/workflows/py.yml/badge.svg)](https://codeberg.org/rvhonorato/gdock/actions?workflow=py.yml)
+![Crates.io Version](https://img.shields.io/crates/v/gdock)
 ![PyPI Python Version](https://img.shields.io/pypi/pyversions/gdock)
 
 
