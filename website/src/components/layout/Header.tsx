@@ -17,8 +17,8 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <a href="#" className="flex items-center">
-          <img src="/media/svg/logo-horizontal-color.svg" alt="gdock" className="h-7 dark:hidden" />
-          <img src="/media/svg/logo-horizontal-white.svg" alt="gdock" className="h-7 hidden dark:block" />
+          <img src="/media/svg/logo-horizontal-color.svg" alt="gdock" width={878} height={412} className="h-7 w-auto dark:hidden" />
+          <img src="/media/svg/logo-horizontal-white.svg" alt="gdock" width={878} height={412} className="h-7 w-auto hidden dark:block" />
         </a>
 
         {/* Desktop nav */}

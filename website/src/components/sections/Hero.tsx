@@ -5,16 +5,20 @@ export function Hero() {
         <img
           src="/media/svg/logo-vertical-color.svg"
           alt="gdock"
-          className="h-64 md:h-80 mx-auto mb-6 dark:hidden"
+          width={519}
+          height={501}
+          className="h-64 md:h-80 w-auto mx-auto mb-6 dark:hidden"
         />
         <img
           src="/media/svg/logo-vertical-white.svg"
           alt="gdock"
-          className="h-64 md:h-80 mx-auto mb-6 hidden dark:block"
+          width={519}
+          height={501}
+          className="h-64 md:h-80 w-auto mx-auto mb-6 hidden dark:block"
         />
-        <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+        <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
           Information-driven protein-protein docking using a genetic algorithm
-        </p>
+        </h1>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
           <a
