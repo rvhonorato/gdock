@@ -73,17 +73,52 @@ cargo fmt
 The commands above check the core crate only. The bindings and the website
 have their own checks:
 
+### Python bindings (`py/`)
+
+You need [uv](https://docs.astral.sh/uv/) and the Python development headers.
+
 ```bash
-# Python bindings (needs maturin and pytest)
-cd py && maturin develop && pytest tests/
+cargo fmt -p gdock-py -- --check
+cargo clippy -p gdock-py --no-default-features --all-targets -- -D warnings
+cargo test -p gdock-py --no-default-features
 
-# WebAssembly bindings (needs wasm-pack and the wasm32-unknown-unknown target)
-cargo clippy -p gdock-wasm --target wasm32-unknown-unknown -- -D warnings
-cd wasm && node build.js
-
-# Website (needs Node.js; it uses the wasm package from wasm/)
-cd website && npm run wasm && npm ci && npm test && npm run build
+cd py
+uv venv .venv
+source .venv/bin/activate
+uv pip install maturin pytest
+maturin develop --uv
+pytest tests/
 ```
+
+### WebAssembly bindings (`wasm/`)
+
+You need [wasm-pack](https://rustwasm.github.io/wasm-pack/), Node.js and the
+`wasm32-unknown-unknown` target (`rustup target add wasm32-unknown-unknown`).
+
+```bash
+cargo clippy -p gdock-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
+
+cd wasm
+wasm-pack test --node
+```
+
+### Website (`website/`)
+
+You need Node.js and wasm-pack. The website uses the wasm package from
+`wasm/`, thus build that package first. The browser tests need the Chromium
+browser of Playwright.
+
+```bash
+cd website
+npm run wasm
+npm ci
+npm run lint
+npx playwright install chromium
+npm test
+npm run build
+```
+
+See the [Website](README.md#website) section of the README for more information.
 
 ## Project Structure
 
@@ -95,9 +130,28 @@ cd website && npm run wasm && npm ci && npm test && npm run build
 | `website/` | gdock.org website |
 | `data/` | Test PDB files |
 | `paper/` | JOSS paper draft |
-| `scripts/` | Utility scripts |
+| `.forgejo/workflows/` | CI and release workflows |
+
+The core crate, the Python bindings and the WebAssembly bindings share one
+version number. It is in the `[workspace.package]` section of `Cargo.toml`.
 
 See the [README](README.md) for a description of the subcommands and usage.
+
+## Releases
+
+Only the maintainers make releases. The procedure is:
+
+1. Set the version in the `[workspace.package]` section of `Cargo.toml`.
+2. Update `version` and `date-released` in `CITATION.cff`.
+3. Push a tag with the name `v<version>`, for example `v2.3.0`.
+
+The tag starts the `release` workflow. The workflow stops if the tag is not
+equal to the version in `Cargo.toml`. It builds the crate, the Python source
+distribution and the Python wheels. Then it publishes the Python package to
+PyPI and the crate to crates.io.
+
+The website has no release. Each push to `main` that changes `website/`,
+`wasm/` or `src/` deploys [gdock.org](https://gdock.org).
 
 ## License
 
