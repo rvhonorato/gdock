@@ -2,6 +2,7 @@
 name = "gdock-wasm"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -9,7 +10,7 @@ homepage.workspace = true
 description = "WebAssembly bindings for the gdock protein–protein docking engine"
 # Not released. The website builds it from this directory.
 publish = false
-readme = "README.md"
+readme = "../README.md"
 keywords = ["docking", "bioinformatics", "wasm", "webassembly", "protein"]
 categories = ["science", "wasm"]
 

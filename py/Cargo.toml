@@ -2,6 +2,7 @@
 name = "gdock-py"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -9,7 +10,7 @@ homepage.workspace = true
 description = "Information-driven protein-protein docking - Python bindings"
 # Released on PyPI, not on crates.io.
 publish = false
-readme = "README.md"
+readme = "../README.md"
 
 [lib]
 name = "_internal"
