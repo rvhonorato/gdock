@@ -1,4 +1,4 @@
-import { MolstarViewer } from "./MolstarViewer";
+import { MolstarViewer } from "./LazyMolstarViewer";
 import type { PoseOutput } from "../hooks/useGdockWasm";
 
 interface Props {

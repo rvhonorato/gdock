@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { scoreStructures, type ScoreOutput } from "../../../hooks/useGdockWasm";
-import { MolstarViewer } from "../../MolstarViewer";
+import { MolstarViewer } from "../../LazyMolstarViewer";
 import { readFileAsTextChunked } from "./utils";
 
 export function ScoreJob() {
