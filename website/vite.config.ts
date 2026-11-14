@@ -2,10 +2,24 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
+import { readFileSync } from 'node:fs'
+import type { Plugin } from 'vite'
+
+// The structured data in index.html shows the version of the workspace.
+const cargoToml = readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
+const gdockVersion = /^version\s*=\s*"([^"]+)"/m.exec(cargoToml)?.[1]
+
+function gdockVersionInHtml(): Plugin {
+  if (!gdockVersion) throw new Error('no version in ../Cargo.toml')
+  return {
+    name: 'gdock-version-in-html',
+    transformIndexHtml: html => html.replaceAll('%GDOCK_VERSION%', gdockVersion),
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), gdockVersionInHtml()],
   base: '/',
   optimizeDeps: {
     exclude: ['gdock-wasm'],
