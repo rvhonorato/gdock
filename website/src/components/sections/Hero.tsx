@@ -16,10 +16,14 @@ export function Hero() {
           height={640}
           className="h-64 md:h-80 w-auto mx-auto mb-6 hidden dark:block"
         />
-        <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+        <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
           <span className="sr-only">gdock: </span>
           Information-driven protein-protein docking using a genetic algorithm
         </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+          Free, open-source docking software for protein complexes. Use interface
+          residues as ambiguous restraints, as in HADDOCK.
+        </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
           <a

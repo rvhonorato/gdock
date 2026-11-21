@@ -1,0 +1,13 @@
+{
+  "name": "gdock",
+  "short_name": "gdock",
+  "description": "Information-driven protein-protein docking using a genetic algorithm.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

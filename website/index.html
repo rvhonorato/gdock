@@ -16,14 +16,27 @@
     <meta property="og:image" content="%SITE_URL%/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="The gdock logo" />
+    <meta property="og:image:alt" content="gdock logo: information-driven protein-protein docking software" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="gdock: information-driven protein-protein docking" />
+    <meta name="twitter:description" content="gdock docks two proteins with a genetic algorithm and residue restraints. Run it in your browser, on the command line, or from Python." />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
+        "@type": ["SoftwareApplication", "SoftwareSourceCode"],
         "name": "gdock",
+        "alternateName": "gdock protein-protein docking",
         "description": "Information-driven protein-protein docking using a genetic algorithm.",
+        "keywords": "protein-protein docking, genetic algorithm, ambiguous restraints, structural bioinformatics, HADDOCK",
+        "identifier": "https://doi.org/10.5281/zenodo.18863557",
+        "codeRepository": "https://codeberg.org/rvhonorato/gdock",
+        "programmingLanguage": "Rust",
+        "downloadUrl": "https://crates.io/crates/gdock",
+        "citation": "Vargas Honorato, R. gdock: Information-Driven Protein-Protein Docking Using a Genetic Algorithm. Zenodo, 2026. https://doi.org/10.5281/zenodo.18863557",
         "url": "%SITE_URL%/",
         "image": "%SITE_URL%/og-image.png",
         "applicationCategory": "Bioinformatics",
@@ -34,7 +47,8 @@
         "sameAs": [
           "https://codeberg.org/rvhonorato/gdock",
           "https://crates.io/crates/gdock",
-          "https://pypi.org/project/gdock/"
+          "https://pypi.org/project/gdock/",
+          "https://doi.org/10.5281/zenodo.18863557"
         ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
@@ -50,6 +64,7 @@
     </script>
   </head>
   <body>
+    <noscript>gdock needs JavaScript for the docking form and the 3D viewer. The documentation is on this page.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
