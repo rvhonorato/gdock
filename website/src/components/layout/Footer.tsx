@@ -5,8 +5,8 @@ export function Footer() {
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="mb-4">
-              <img src="/media/svg/logo-horizontal-grayscale.svg" alt="gdock" className="h-8 dark:hidden" />
-              <img src="/media/svg/logo-horizontal-white.svg" alt="gdock" className="h-8 hidden dark:block opacity-80" />
+              <img src="/media/webp/logo-horizontal-grayscale.webp" alt="gdock" width={205} height={96} loading="lazy" className="h-8 w-auto dark:hidden" />
+              <img src="/media/webp/logo-horizontal-white.webp" alt="gdock" width={205} height={96} loading="lazy" className="h-8 w-auto hidden dark:block opacity-80" />
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               Information-driven protein-protein docking using a genetic algorithm.
@@ -19,7 +19,7 @@ export function Footer() {
             </a>
           </div>
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-3">Links</h4>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-3">Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <a href="https://codeberg.org/rvhonorato/gdock" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-accent-500 dark:text-slate-400 dark:hover:text-accent-400 transition-colors">
@@ -44,7 +44,7 @@ export function Footer() {
             </ul>
           </div>
           <div id="citation">
-            <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-3">Citation</h4>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-3">Citation</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
               Vargas Honorato, R. <em>gdock: Information-Driven Protein-Protein Docking Using a Genetic Algorithm.</em> Zenodo, 2026.
             </p>

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { zipSync, strToU8, gzip, gunzipSync } from "fflate";
 import { scoreStructures, computeContacts, clusterFromContacts } from "../../../hooks/useGdockWasm";
-import { MolstarViewer } from "../../MolstarViewer";
+import { MolstarViewer } from "../../LazyMolstarViewer";
 import { readFileAsTextChunked, readFileAsArrayBufferChunked, processLargeFileInChunks } from "./utils";
 import { Th } from "./Th";
 import {

@@ -55,6 +55,9 @@ export function Performance() {
             <img
               src="/images/plot_dockq_categories.svg"
               alt="DockQ quality categories distribution across benchmark"
+              width={432}
+              height={360}
+              loading="lazy"
               className="w-full h-auto"
             />
           </div>
@@ -62,6 +65,9 @@ export function Performance() {
             <img
               src="/images/plot_timing_histogram.svg"
               alt="Histogram of docking runtime across benchmark"
+              width={576}
+              height={360}
+              loading="lazy"
               className="w-full h-auto"
             />
           </div>

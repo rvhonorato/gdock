@@ -18,7 +18,7 @@ export function Gdock() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col items-center mb-6">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-            Web Interface
+            Dock proteins in your browser
           </h2>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
             <span className="flex items-center gap-1.5">

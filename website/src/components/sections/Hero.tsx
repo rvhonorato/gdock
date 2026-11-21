@@ -3,17 +3,26 @@ export function Hero() {
     <section className="py-16 md:py-24 border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
         <img
-          src="/media/svg/logo-vertical-color.svg"
+          src="/media/webp/logo-vertical-color.webp"
           alt="gdock"
-          className="h-64 md:h-80 mx-auto mb-6 dark:hidden"
+          width={664}
+          height={640}
+          className="h-64 md:h-80 w-auto mx-auto mb-6 dark:hidden"
         />
         <img
-          src="/media/svg/logo-vertical-white.svg"
+          src="/media/webp/logo-vertical-white.webp"
           alt="gdock"
-          className="h-64 md:h-80 mx-auto mb-6 hidden dark:block"
+          width={664}
+          height={640}
+          className="h-64 md:h-80 w-auto mx-auto mb-6 hidden dark:block"
         />
-        <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+        <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
+          <span className="sr-only">gdock: </span>
           Information-driven protein-protein docking using a genetic algorithm
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+          Free, open-source docking software for protein complexes. Use interface
+          residues as ambiguous restraints, as in HADDOCK.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3 mb-6">

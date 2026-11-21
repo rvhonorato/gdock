@@ -28,7 +28,7 @@ Options:
         language="bash"
       />
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h4>
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h3>
         <CodeBlock
           code={`gdock run \\
   --receptor data/2oob_A.pdb \\
@@ -62,7 +62,7 @@ Options:
         language="bash"
       />
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h4>
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h3>
         <CodeBlock
           code={`gdock score \\
   --receptor receptor.pdb \\
@@ -72,7 +72,7 @@ Options:
         />
       </div>
       <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Output</h4>
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Output</h3>
         <p className="text-sm text-slate-600 dark:text-slate-400">
           Returns the total energy score and individual contributions: VDW, electrostatics, desolvation, and AIR restraints.
         </p>
@@ -100,7 +100,7 @@ Options:
         language="bash"
       />
       <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h4>
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Example</h3>
         <CodeBlock
           code={`gdock restraints \\
   --receptor receptor_ref.pdb \\
@@ -110,7 +110,7 @@ Options:
         />
       </div>
       <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-        <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Restraint Format</h4>
+        <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Restraint Format</h3>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
           Output is a comma-separated list of residue pairs in <code className="bg-slate-100 dark:bg-slate-600 px-1 rounded">receptor:ligand</code> format:
         </p>
