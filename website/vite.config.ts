@@ -6,14 +6,40 @@ import { readFileSync } from 'node:fs'
 import type { Plugin } from 'vite'
 
 // The structured data in index.html shows the version of the workspace.
-const cargoToml = readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
-const gdockVersion = /^version\s*=\s*"([^"]+)"/m.exec(cargoToml)?.[1]
+function workspaceVersion(): string {
+  const cargoToml = readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
+  const section = /^\[workspace\.package\]\n((?:(?!\[).*\n?)*)/m.exec(cargoToml)?.[1]
+  const version = section && /^version\s*=\s*"([^"]+)"/m.exec(section)?.[1]
+  if (!version) throw new Error('no version in [workspace.package] of ../Cargo.toml')
+  return version
+}
+
+// Set SITE_URL for staging or preview builds, so they do not claim the production URL.
+const siteUrl = (process.env.SITE_URL ?? 'https://gdock.org').replace(/\/+$/, '')
 
 function gdockVersionInHtml(): Plugin {
-  if (!gdockVersion) throw new Error('no version in ../Cargo.toml')
   return {
     name: 'gdock-version-in-html',
-    transformIndexHtml: html => html.replaceAll('%GDOCK_VERSION%', gdockVersion),
+    apply: 'build',
+    transformIndexHtml: html =>
+      html
+        .replaceAll('%GDOCK_VERSION%', workspaceVersion())
+        .replaceAll('%SITE_URL%', siteUrl),
+    generateBundle() {
+      const lastmod = new Date().toISOString().slice(0, 10)
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${siteUrl}/</loc>
+    <lastmod>${lastmod}</lastmod>
+  </url>
+</urlset>
+`,
+      })
+    },
   }
 }
 
@@ -46,7 +72,19 @@ export default defineConfig({
           // node_modules path and Vite can serve the .wasm file next to it.
           exclude: ['gdock-wasm'],
           // Pre-bundle these to avoid mid-test page reloads.
-          include: ['react-dom/client', 'fflate', 'katex'],
+          include: [
+            'react-dom/client',
+            'fflate',
+            'katex',
+            // Molstar loads on demand, so Vite does not find it at startup.
+            'molstar/lib/mol-plugin-ui',
+            'molstar/lib/mol-plugin-ui/react18',
+            'molstar/lib/mol-plugin-ui/spec',
+            'molstar/lib/mol-script/language/builder',
+            'molstar/lib/mol-util/color',
+            'molstar/lib/mol-model/structure',
+            'molstar/lib/mol-data/int',
+          ],
         },
         resolve: { preserveSymlinks: true },
         test: {

@@ -18,7 +18,7 @@ export function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <a href="#" className="flex items-center">
           <img src="/media/webp/logo-horizontal-color.webp" alt="gdock" width={205} height={96} className="h-7 w-auto dark:hidden" />
-          <img src="/media/webp/logo-horizontal-white.webp" alt="gdock" width={205} height={96} loading="lazy" className="h-7 w-auto hidden dark:block" />
+          <img src="/media/webp/logo-horizontal-white.webp" alt="gdock" width={205} height={96} className="h-7 w-auto hidden dark:block" />
         </a>
 
         {/* Desktop nav */}

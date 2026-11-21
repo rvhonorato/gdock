@@ -40,7 +40,9 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
           </button>
         ))}
       </div>
-      {/* All panels stay in the DOM, so crawlers and page search find their text. */}
+      {/* All panels stay in the DOM, so crawlers and page search find their text.
+          Do not put a heavy or stateful component (viewer, WASM job) in a tab:
+          it would mount hidden, with zero size, and keep running. */}
       {tabs.map(tab => (
         <div
           key={tab.id}

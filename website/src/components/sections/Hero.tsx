@@ -12,12 +12,12 @@ export function Hero() {
         <img
           src="/media/webp/logo-vertical-white.webp"
           alt="gdock"
-          loading="lazy"
           width={664}
           height={640}
           className="h-64 md:h-80 w-auto mx-auto mb-6 hidden dark:block"
         />
         <h1 className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+          <span className="sr-only">gdock: </span>
           Information-driven protein-protein docking using a genetic algorithm
         </h1>
 
